@@ -822,3 +822,49 @@ export interface PaymentDistributionData {
   percentage: number;
 }
 
+export type RFMSegment =
+  | 'champions'
+  | 'loyal'
+  | 'potential_loyalist'
+  | 'new_customers'
+  | 'at_risk'
+  | 'hibernating';
+
+export interface CustomerRFMProfile {
+  customerId: string;
+  name: string;
+  phone: string;
+  tier: MembershipTier | null;
+  recencyDays: number;
+  frequency: number;
+  monetary: number;
+  rScore: number;
+  fScore: number;
+  mScore: number;
+  rfmScore: string; // e.g. "554", "443", "121"
+  segment: RFMSegment;
+  favoriteBarberName?: string;
+  favoriteServiceName?: string;
+  lastVisitDate?: string;
+  predictedNextVisit?: string;
+  isOverdue: boolean;
+}
+
+export interface RFMSegmentSummary {
+  segment: RFMSegment;
+  segmentLabel: string;
+  customerCount: number;
+  percentage: number;
+  totalRevenue: number;
+  avgSpend: number;
+  recommendedAction: string;
+}
+
+export interface CustomerIntelligenceSummary {
+  totalAnalyzedCustomers: number;
+  averageRecencyDays: number;
+  averageVisitInterval: number;
+  atRiskCustomerCount: number;
+  segments: RFMSegmentSummary[];
+}
+

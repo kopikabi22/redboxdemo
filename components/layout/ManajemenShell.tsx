@@ -23,6 +23,7 @@ export const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "purchase_orders", label: "Purchase Orders (PO)", href: "/manajemen/purchasing/orders" },
   { id: "suppliers", label: "Master Supplier", href: "/manajemen/purchasing/suppliers" },
   { id: "customers", label: "Customer Database", href: "/manajemen/customers" },
+  { id: "crm_intelligence", label: "Customer Intelligence (RFM)", href: "/manajemen/crm/intelligence" },
   { id: "membership", label: "Membership & Loyalty", href: "/manajemen/membership" },
   { id: "promotions", label: "Promosi & Diskon", href: "/manajemen/promotions" },
   { id: "reminders", label: "Customer Reminder", href: "/manajemen/reminders" },

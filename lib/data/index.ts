@@ -26,3 +26,4 @@ export * from './finance';
 export * from './audit';
 export * from './targets';
 export * from './executiveAnalytics';
+export * from './customerAnalytics';
