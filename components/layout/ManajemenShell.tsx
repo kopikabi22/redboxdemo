@@ -110,33 +110,37 @@ export function ManajemenShell({
   const pathname = usePathname();
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
 
-  // Initialize open groups: the group that contains activeNavId or pathname is open by default
+  // Helper to determine the active group ID based on activeNavId or pathname
+  const getActiveGroupId = () => {
+    for (const group of NAV_GROUPS) {
+      if (
+        group.items.some(
+          (item) => item.id === activeNavId || (pathname && (item.href === pathname || pathname.startsWith(item.href + "/"))),
+        )
+      ) {
+        return group.id;
+      }
+    }
+    return NAV_GROUPS[0]?.id ?? "operations";
+  };
+
+  // Initialize open groups: ONLY the active group is open (true), all others are collapsed (false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const activeId = getActiveGroupId();
     const state: Record<string, boolean> = {};
     for (const group of NAV_GROUPS) {
-      const hasActive = group.items.some(
-        (item) => item.id === activeNavId || (pathname && item.href === pathname),
-      );
-      state[group.id] = hasActive;
-    }
-    // If no active group found, open the first group by default
-    const anyOpen = Object.values(state).some(Boolean);
-    if (!anyOpen && NAV_GROUPS.length > 0) {
-      state[NAV_GROUPS[0].id] = true;
+      state[group.id] = group.id === activeId;
     }
     return state;
   });
 
-  // Keep group open when activeNavId changes
+  // When activeNavId or pathname changes, ensure the active group is expanded
   useEffect(() => {
-    for (const group of NAV_GROUPS) {
-      const hasActive = group.items.some(
-        (item) => item.id === activeNavId || (pathname && item.href === pathname),
-      );
-      if (hasActive) {
-        setOpenGroups((prev) => ({ ...prev, [group.id]: true }));
-      }
-    }
+    const activeId = getActiveGroupId();
+    setOpenGroups((prev) => ({
+      ...prev,
+      [activeId]: true,
+    }));
   }, [activeNavId, pathname]);
 
   const toggleGroup = (groupId: string) => {
