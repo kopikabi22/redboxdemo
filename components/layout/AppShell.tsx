@@ -23,6 +23,9 @@ export function getNavItemsForRole(role: EmployeeRole): NavItem[] {
       { id: "pos", label: "POS", href: "/pos/new" },
       { id: "attendance", label: "Attendance & Break", href: "/attendance" },
       { id: "inventory", label: "Inventory", href: "/inventory" },
+      // Barber doesn't handle cash, so this tab is Kasir-only — consistent
+      // with Inventory above.
+      { id: "closing", label: "Cashier Closing", href: "/pos/closing" },
     ];
   }
   if (role === "Barber") {
