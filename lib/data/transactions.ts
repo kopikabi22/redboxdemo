@@ -188,3 +188,7 @@ export function checkout(input: CheckoutInput): Transaction {
     throw err;
   }
 }
+
+export function getTransactions(): Transaction[] {
+  return readCollection<Transaction>(StorageKeys.transactions);
+}

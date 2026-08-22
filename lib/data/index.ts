@@ -18,3 +18,4 @@ export * from './promotions';
 export * from './appointments';
 export * from './schedules';
 export * from './batches';
+export * from './reminders';

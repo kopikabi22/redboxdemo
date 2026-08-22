@@ -390,3 +390,34 @@ export interface DeductedBatchInfo {
   expiryDate: string;
 }
 
+export type ReminderType = 'haircut_routine' | 'dormant_churn' | 'upcoming_appointment';
+
+export interface CustomerReminderCandidate {
+  customer: Customer;
+  type: ReminderType;
+  lastVisitDate: string; // YYYY-MM-DD
+  daysSinceLastVisit: number;
+  preferredBarberName?: string;
+  lastBranchName?: string;
+  lastBranchId?: string;
+  upcomingAppointmentDate?: string;
+  upcomingAppointmentTime?: string;
+  upcomingAppointmentId?: string;
+  suggestedMessage: string;
+  lastRemindedAt?: string | null;
+  isEligible: boolean;
+  ineligibilityReason?: string;
+}
+
+export interface ReminderLog {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  type: ReminderType;
+  message: string;
+  sentAt: string; // ISO timestamp
+  actorId: string;
+  actorName: string;
+}
+

@@ -20,6 +20,7 @@ const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "customers", label: "Customer Database", href: "/manajemen/customers" },
   { id: "membership", label: "Membership & Loyalty", href: "/manajemen/membership" },
   { id: "promotions", label: "Promosi & Diskon", href: "/manajemen/promotions" },
+  { id: "reminders", label: "Customer Reminder", href: "/manajemen/reminders" },
   { id: "employees", label: "Employee Master", href: "/manajemen/employees" },
   { id: "schedules", label: "Jadwal Kerja (Roster)", href: "/manajemen/schedules" },
 ];
