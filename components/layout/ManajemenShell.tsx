@@ -17,6 +17,8 @@ const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "appointments", label: "Reservasi & Antrean", href: "/manajemen/appointments" },
   { id: "catalog", label: "Product & Service Master", href: "/manajemen/catalog" },
   { id: "batches", label: "Batch & Kadaluarsa", href: "/manajemen/inventory/batches" },
+  { id: "stock_opname", label: "Stock Opname", href: "/manajemen/inventory/opname" },
+  { id: "stock_transfers", label: "Transfer Stok", href: "/manajemen/inventory/transfers" },
   { id: "purchase_orders", label: "Purchase Orders (PO)", href: "/manajemen/purchasing/orders" },
   { id: "suppliers", label: "Master Supplier", href: "/manajemen/purchasing/suppliers" },
   { id: "customers", label: "Customer Database", href: "/manajemen/customers" },

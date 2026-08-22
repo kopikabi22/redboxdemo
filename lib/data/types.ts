@@ -478,3 +478,72 @@ export interface PurchaseOrder {
   updatedAt: string;
 }
 
+export type StockOpnameStatus = 'draft' | 'completed' | 'cancelled';
+
+export interface StockOpnameItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productSku: string;
+  systemQty: number;
+  physicalQty: number;
+  variance: number;
+  notes?: string;
+}
+
+export interface StockOpname {
+  id: string;
+  opnameNumber: string;
+  branchId: string;
+  branchName: string;
+  opnameDate: string;
+  status: StockOpnameStatus;
+  items: StockOpnameItem[];
+  totalVarianceItems: number;
+  totalVarianceQty: number;
+  notes?: string;
+  cancellationReason?: string;
+  conductedBy: string;
+  conductedByName: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type StockTransferStatus = 'draft' | 'in_transit' | 'received' | 'cancelled';
+
+export interface StockTransferItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productSku: string;
+  qty: number;
+  unitCost: number;
+  deductedBatches?: DeductedBatchInfo[];
+}
+
+export interface StockTransfer {
+  id: string;
+  transferNumber: string;
+  sourceBranchId: string;
+  sourceBranchName: string;
+  targetBranchId: string;
+  targetBranchName: string;
+  status: StockTransferStatus;
+  items: StockTransferItem[];
+  totalQty: number;
+  totalValue: number;
+  notes?: string;
+  cancellationReason?: string;
+  dispatchedBy?: string;
+  dispatchedByName?: string;
+  dispatchedAt?: string;
+  receivedBy?: string;
+  receivedByName?: string;
+  receivedAt?: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+

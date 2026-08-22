@@ -20,3 +20,4 @@ export * from './schedules';
 export * from './batches';
 export * from './reminders';
 export * from './purchasing';
+export * from './stockOps';
