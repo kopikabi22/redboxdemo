@@ -1,0 +1,94 @@
+flowchart LR
+    Kasir([Kasir])
+    Barber([Barber])
+    BM([Branch Manager])
+    Owner([Owner/HQ])
+    HR([HR])
+    Finance([Finance])
+    Marketing([Marketing/CRM])
+    Warehouse([Warehouse])
+    Purchasing([Purchasing])
+    SysAdmin([System Admin])
+
+    UC1((Buat Transaksi POS))
+    UC2((Pilih/Daftar Konsumen))
+    UC3((Proses Pembayaran))
+    UC4((Buat/Kelola Booking))
+    UC5((Kelola Antrian Walk-In))
+    UC6((Clock In/Out & Break))
+    UC7((Cek Stok & Stock Opname))
+    UC8((Ajukan Refund/Void))
+    UC9((Setujui Refund/Void))
+    UC10((Review Cashier Closing))
+    UC11((Kelola Data Customer/CRM))
+    UC12((Atur Tier & Rules Membership))
+    UC13((Kelola Master Product/Service))
+    UC14((Stock Adjustment/Transfer))
+    UC15((Kelola Supplier & PO))
+    UC16((Terima Barang/Receiving))
+    UC17((Kelola Employee & Rolling Schedule))
+    UC18((Setujui Cuti/Izin))
+    UC19((Kelola Branch & Target))
+    UC20((Buat Promotion/Campaign))
+    UC21((Lihat Finance: P&L/Cashflow/Neraca))
+    UC22((Lihat Dashboard & Analytics))
+    UC23((Kelola User/Role/Permission))
+    UC24((Lihat Audit Log))
+
+    Kasir --> UC1
+    Kasir --> UC2
+    Kasir --> UC3
+    Kasir --> UC4
+    Kasir --> UC5
+    Kasir --> UC6
+    Kasir --> UC7
+    Kasir --> UC8
+
+    Barber --> UC4
+    Barber --> UC6
+
+    BM --> UC9
+    BM --> UC10
+    BM --> UC14
+    BM --> UC18
+    BM --> UC1
+    BM --> UC4
+
+    Owner --> UC1
+    Owner --> UC9
+    Owner --> UC10
+    Owner --> UC11
+    Owner --> UC12
+    Owner --> UC13
+    Owner --> UC14
+    Owner --> UC15
+    Owner --> UC17
+    Owner --> UC18
+    Owner --> UC19
+    Owner --> UC20
+    Owner --> UC21
+    Owner --> UC22
+    Owner --> UC23
+    Owner --> UC24
+
+    HR --> UC17
+    HR --> UC18
+
+    Finance --> UC10
+    Finance --> UC21
+    Finance --> UC22
+
+    Marketing --> UC11
+    Marketing --> UC12
+    Marketing --> UC20
+    Marketing --> UC22
+
+    Warehouse --> UC7
+    Warehouse --> UC14
+    Warehouse --> UC16
+
+    Purchasing --> UC15
+    Purchasing --> UC16
+
+    SysAdmin --> UC23
+    SysAdmin --> UC24

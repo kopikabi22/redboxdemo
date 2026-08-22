@@ -1,0 +1,34 @@
+flowchart TD
+    Start([Mulai: Kasir buka /pos/new]) --> PilihKonsumen{Konsumen sudah\nmember?}
+    PilihKonsumen -->|Ya| CariMember[Cari dari daftar member\nsearch nama/HP]
+    PilihKonsumen -->|Tidak| InputHP[Input nomor HP\nsebagai Guest]
+    CariMember --> TampilInfo[Tampilkan nama, tier, sisa poin]
+    InputHP --> LanjutTransaksi[Lanjut sebagai Guest\ntanpa proses aktivasi member]
+    TampilInfo --> TambahItem
+    LanjutTransaksi --> TambahItem
+
+    TambahItem[Tambah item ke keranjang\nservice dan/atau produk retail] --> AdaLagi{Tambah item lagi?}
+    AdaLagi -->|Ya| TambahItem
+    AdaLagi -->|Tidak| TekanBayar[Kasir tekan tombol Bayar]
+
+    TekanBayar --> PopupBayar[Muncul popup:\nnominal total + pilihan metode bayar]
+    PopupBayar --> PilihMetode{Pilih metode}
+    PilihMetode -->|Cash| InputCash[Input jumlah dibayar\nsistem hitung kembalian]
+    PilihMetode -->|QRIS/Debit/Transfer/E-wallet| ProsesNonTunai[Proses via gateway]
+    PilihMetode -->|Split| SplitBayar[Bagi ke beberapa metode]
+
+    InputCash --> Konfirmasi
+    ProsesNonTunai --> Konfirmasi
+    SplitBayar --> Konfirmasi
+
+    Konfirmasi[Konfirmasi pembayaran] --> SimpanOrder[Simpan Order + Order Item + Payment]
+    SimpanOrder --> DeductStock[Auto-deduct stok produk terjual\nbuat Stock Movement record]
+    DeductStock --> HitungPoin{Konsumen member?}
+    HitungPoin -->|Ya| TambahPoin[Tambah Loyalty Point\nRp10.000 = 1 poin]
+    HitungPoin -->|Tidak Guest| SkipPoin[Skip — Guest tidak dapat poin]
+    TambahPoin --> HitungKomisi
+    SkipPoin --> HitungKomisi
+
+    HitungKomisi[Hitung Commission untuk barber/employee] --> CetakStruk[Cetak/tampilkan struk]
+    CetakStruk --> CatatRiwayat[Masuk ke Riwayat Transaksi Masuk]
+    CatatRiwayat --> End([Selesai])

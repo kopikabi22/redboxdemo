@@ -1,0 +1,246 @@
+classDiagram
+    class Branch {
+        +bigint branchId
+        +string name
+        +string city
+        +string province
+        +string scopeType
+        +getOperatingHours() string
+        +isWithinOperatingHours(datetime time) bool
+    }
+
+    class Employee {
+        +bigint employeeId
+        +bigint userId
+        +bigint branchId
+        +string name
+        +string position
+        +bool active
+        +clockIn(method: string) Attendance
+        +clockOut(method: string) Attendance
+        +startBreak() void
+        +endBreak() void
+        +getAssignedBranch() Branch
+    }
+
+    class Customer {
+        +bigint customerId
+        +string name
+        +string phoneNumber
+        +string type
+        +registerAsMember(activationFee: decimal) Membership
+        +getLoyaltyBalance() int
+        +mergeInto(targetCustomerId: bigint) CustomerMergeLog
+    }
+
+    class Membership {
+        +bigint membershipId
+        +bigint customerId
+        +string tier
+        +datetime activatedAt
+        +decimal activationFee
+        +upgradeTier(newTier: string) bool
+        +isActive() bool
+    }
+
+    class LoyaltyLedger {
+        +bigint ledgerId
+        +bigint customerId
+        +int points
+        +string type
+        +earnPoints(orderId: bigint, amount: int) LoyaltyLedger
+        +redeemPoints(amount: int) LoyaltyLedger
+        +getBalance(customerId: bigint) int
+    }
+
+    class Appointment {
+        +bigint appointmentId
+        +bigint customerId
+        +bigint employeeId
+        +string type
+        +string address
+        +datetime slotTime
+        +string status
+        +checkAvailability(employeeId: bigint, slotTime: datetime) bool
+        +validateRadius(address: string, branchId: bigint) bool
+        +blockBarberSchedule(employeeId: bigint, start: datetime, end: datetime) void
+        +checkIn() void
+        +markNoShow(reason: string) void
+    }
+
+    class Service {
+        +bigint serviceId
+        +string name
+        +int durationMinutes
+        +decimal price
+        +date effectiveDate
+        +getCurrentPrice() decimal
+        +getConsumedProducts() ProductServiceLink[]
+    }
+
+    class Product {
+        +bigint productId
+        +string sku
+        +string name
+        +decimal costPrice
+        +decimal sellingPrice
+        +getVariants() Variant[]
+        +getAvailableStock(branchId: bigint) int
+    }
+
+    class ProductServiceLink {
+        +bigint linkId
+        +bigint serviceId
+        +bigint productId
+        +decimal quantityConsumed
+    }
+
+    class Inventory {
+        +bigint inventoryId
+        +bigint productId
+        +bigint branchId
+        +int onHand
+        +int reserved
+        +date expiryDate
+        +getAvailableStock() int
+        +deductStock(qty: int, reference: string) StockMovement
+        +addStock(qty: int, reference: string) StockMovement
+        +reserveStock(qty: int) bool
+    }
+
+    class StockMovement {
+        +bigint movementId
+        +bigint inventoryId
+        +int quantity
+        +string movementType
+        +string reference
+        +logMovement() void
+    }
+
+    class PurchaseOrder {
+        +bigint poId
+        +bigint supplierId
+        +string status
+        +createRequest(items: PurchaseOrderItem[]) PurchaseOrder
+        +approve(approverId: bigint) bool
+        +receive(items: array, batch: string, expiry: date) StockMovement[]
+    }
+
+    class Order {
+        +bigint orderId
+        +bigint customerId
+        +bigint branchId
+        +decimal total
+        +string status
+        +addItem(item: OrderItem) void
+        +applyPromotion(promotionId: bigint) decimal
+        +calculateTotal() decimal
+        +void(reason: string, approverId: bigint) bool
+        +refund(reason: string, approverId: bigint) Payment
+    }
+
+    class OrderItem {
+        +bigint orderItemId
+        +bigint orderId
+        +int quantity
+        +decimal price
+    }
+
+    class Payment {
+        +bigint paymentId
+        +bigint orderId
+        +string method
+        +decimal amount
+        +processPayment() bool
+        +reconcileWithGateway(settlementAmount: decimal, fee: decimal) BankReconciliation
+    }
+
+    class Commission {
+        +bigint commissionId
+        +bigint employeeId
+        +bigint orderId
+        +decimal amount
+        +calculateCommission(order: Order, employee: Employee) decimal
+    }
+
+    class Promotion {
+        +bigint promotionId
+        +string name
+        +string ruleType
+        +decimal discountValue
+        +string scopeLevel
+        +isApplicable(order: Order) bool
+    }
+
+    class AuditLog {
+        +bigint eventId
+        +bigint userId
+        +string action
+        +string entity
+        +bigint entityId
+        +recordEvent(action: string, entity: string, entityId: bigint, before: string, after: string) void
+    }
+
+    class ChartOfAccounts {
+        +bigint accountId
+        +string accountCode
+        +string accountName
+        +string accountType
+    }
+
+    class JournalEntry {
+        +bigint journalId
+        +bigint branchId
+        +bigint fiscalPeriodId
+        +string reference
+        +addLine(accountId: bigint, debit: decimal, credit: decimal) JournalLine
+        +isBalanced() bool
+        +post() bool
+    }
+
+    class JournalLine {
+        +bigint lineId
+        +bigint journalId
+        +bigint accountId
+        +decimal debit
+        +decimal credit
+    }
+
+    class FiscalPeriod {
+        +bigint fiscalPeriodId
+        +date periodStart
+        +date periodEnd
+        +string status
+        +close() bool
+    }
+
+    Branch "1" --> "*" Employee : employs
+    Customer "1" --> "0..1" Membership : has
+    Customer "1" --> "*" LoyaltyLedger : earns_redeems
+    Customer "1" --> "*" Appointment : books
+    Customer "1" --> "*" Order : places
+    Employee "1" --> "*" Appointment : serves
+    Employee "1" --> "*" Commission : earns
+    Service "1" --> "*" ProductServiceLink : consumes
+    Product "1" --> "*" ProductServiceLink : consumed_by
+    Product "1" --> "*" Inventory : tracked_in
+    Inventory "1" --> "*" StockMovement : logs
+    PurchaseOrder "1" --> "*" StockMovement : generates
+    Order "1" --> "*" OrderItem : contains
+    Order "1" --> "*" Payment : paid_by
+    Order "1" --> "*" Commission : generates
+    Order "*" --> "0..1" Promotion : applies
+    OrderItem "*" --> "0..1" Service : references
+    OrderItem "*" --> "0..1" Product : references
+    JournalEntry "1" --> "*" JournalLine : contains
+    JournalLine "*" --> "1" ChartOfAccounts : classifies
+    FiscalPeriod "1" --> "*" JournalEntry : contains
+    Payment "1" --> "0..1" BankReconciliation : matched_by
+
+    class BankReconciliation {
+        +bigint reconciliationId
+        +bigint paymentId
+        +decimal settlementAmount
+        +decimal gatewayFee
+        +match(payment: Payment, settlement: decimal, fee: decimal) bool
+    }

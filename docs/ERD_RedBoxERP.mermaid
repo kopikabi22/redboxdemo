@@ -1,0 +1,338 @@
+erDiagram
+    company ||--o{ branch : "has"
+    branch ||--o{ employee : "employs"
+    branch ||--o{ inventory : "stocks"
+    branch ||--o{ orders : "records"
+    branch ||--o{ appointment : "schedules"
+    branch ||--o{ stock_transfer : "source_or_dest"
+    branch ||--o{ journal_entry : "originates"
+
+    role ||--o{ app_user : "assigned_to"
+    app_user ||--o| employee : "is"
+    app_user ||--o{ audit_log : "performs"
+
+    customer ||--o| membership : "has"
+    customer ||--o{ loyalty_ledger : "earns_redeems"
+    customer ||--o{ orders : "places"
+    customer ||--o{ appointment : "books"
+    customer ||--o{ customer_preference : "has"
+    customer ||--o{ complaint : "files"
+    customer ||--o{ customer_merge_log : "merged_into"
+
+    employee ||--o{ appointment : "serves"
+    employee ||--o{ commission : "earns"
+    employee ||--o{ orders : "processes"
+    employee ||--o{ attendance : "logs"
+    employee ||--o{ shift_schedule : "assigned"
+
+    service ||--o{ order_item : "sold_as"
+    service ||--o{ appointment : "booked_for"
+    service ||--o{ product_service_link : "consumes"
+
+    product ||--o{ variant : "has"
+    product ||--o{ order_item : "sold_as"
+    product ||--o{ inventory : "tracked_in"
+    product ||--o{ stock_movement : "moves"
+    product ||--o{ purchase_order_item : "ordered"
+    product ||--o{ product_service_link : "consumed_by"
+
+    inventory ||--o{ stock_movement : "logs"
+    inventory ||--o{ stock_transfer : "involved_in"
+
+    supplier ||--o{ purchase_order : "fulfills"
+    purchase_order ||--o{ purchase_order_item : "contains"
+    purchase_order ||--o{ stock_movement : "generates_receiving"
+
+    orders ||--o{ order_item : "contains"
+    orders ||--o{ payment : "paid_by"
+    orders ||--o{ commission : "generates"
+    orders ||--o{ journal_entry : "generates"
+    order_item }o--|| service : "references"
+    order_item }o--|| product : "references"
+
+    promotion ||--o{ orders : "applied_to"
+
+    chart_of_accounts ||--o{ journal_line : "classifies"
+    journal_entry ||--o{ journal_line : "contains"
+    fiscal_period ||--o{ journal_entry : "belongs_to"
+    payment ||--o{ bank_reconciliation : "matched_by"
+
+    company {
+        bigint company_id PK "AUTO_INCREMENT"
+        varchar name "Nama holding"
+    }
+
+    branch {
+        bigint branch_id PK "AUTO_INCREMENT"
+        bigint company_id FK "FK -> company.company_id"
+        varchar name "Nama cabang, misal Bypass"
+        varchar city "Cirebon | Tegal"
+        varchar province "Jawa Barat | Jawa Tengah"
+        varchar operating_hours "Jam buka-tutup"
+        enum scope_type "holding | branch (default branch)"
+    }
+
+    role {
+        bigint role_id PK "AUTO_INCREMENT"
+        varchar name "Owner | Kasir | Barber | dst"
+    }
+
+    app_user {
+        bigint user_id PK "AUTO_INCREMENT"
+        bigint role_id FK "FK -> role.role_id"
+        varchar username
+        varchar auth_method "password | pin | face"
+        datetime last_login_at
+    }
+
+    employee {
+        bigint employee_id PK "AUTO_INCREMENT"
+        bigint user_id FK "FK -> app_user.user_id, NULLABLE"
+        bigint branch_id FK "FK -> branch.branch_id"
+        varchar name
+        varchar position "Cashier | Barber | Warehouse | dst"
+        boolean active
+    }
+
+    customer {
+        bigint customer_id PK "AUTO_INCREMENT"
+        varchar name "NULLABLE untuk Guest"
+        varchar phone_number "UNIQUE, wajib untuk Guest maupun Member"
+        enum type "guest | member"
+        datetime created_at
+    }
+
+    membership {
+        bigint membership_id PK "AUTO_INCREMENT"
+        bigint customer_id FK "FK -> customer.customer_id, UNIQUE"
+        enum tier "bronze | silver | gold | platinum"
+        datetime activated_at
+        decimal activation_fee "default 100000"
+    }
+
+    loyalty_ledger {
+        bigint ledger_id PK "AUTO_INCREMENT"
+        bigint customer_id FK "FK -> customer.customer_id"
+        int points "positif = earn, negatif = redeem"
+        enum type "earn | redeem | adjustment | expiry"
+        bigint order_id FK "FK -> orders.order_id, NULLABLE"
+        datetime created_at
+    }
+
+    customer_preference {
+        bigint preference_id PK "AUTO_INCREMENT"
+        bigint customer_id FK "FK -> customer.customer_id"
+        varchar preferred_barber_id "FK -> employee.employee_id, NULLABLE"
+        varchar preferred_style
+    }
+
+    complaint {
+        bigint complaint_id PK "AUTO_INCREMENT"
+        bigint customer_id FK "FK -> customer.customer_id"
+        text description
+        enum status "open | in_progress | resolved"
+        datetime created_at
+    }
+
+    customer_merge_log {
+        bigint merge_id PK "AUTO_INCREMENT"
+        bigint source_customer_id FK "FK -> customer.customer_id, record lama"
+        bigint target_customer_id FK "FK -> customer.customer_id, record final"
+        datetime merged_at
+    }
+
+    service {
+        bigint service_id PK "AUTO_INCREMENT"
+        varchar name
+        int duration_minutes
+        decimal price "harga aktif saat ini"
+        date effective_date "immutable history via price_history terpisah"
+    }
+
+    product {
+        bigint product_id PK "AUTO_INCREMENT"
+        varchar sku "UNIQUE"
+        varchar name
+        varchar category
+        decimal cost_price
+        decimal selling_price
+    }
+
+    product_service_link {
+        bigint link_id PK "AUTO_INCREMENT"
+        bigint service_id FK "FK -> service.service_id"
+        bigint product_id FK "FK -> product.product_id"
+        decimal quantity_consumed "misal 0.05 (liter) per pemakaian"
+    }
+
+    variant {
+        bigint variant_id PK "AUTO_INCREMENT"
+        bigint product_id FK "FK -> product.product_id"
+        varchar variant_name
+    }
+
+    inventory {
+        bigint inventory_id PK "AUTO_INCREMENT"
+        bigint product_id FK "FK -> product.product_id"
+        bigint branch_id FK "FK -> branch.branch_id"
+        int on_hand
+        int reserved
+        date expiry_date "NULLABLE"
+        varchar batch_no "NULLABLE"
+    }
+
+    stock_movement {
+        bigint movement_id PK "AUTO_INCREMENT"
+        bigint inventory_id FK "FK -> inventory.inventory_id"
+        int quantity "positif = masuk, negatif = keluar"
+        enum movement_type "sale | purchase_receiving | transfer | adjustment | writeoff | consumption"
+        varchar reference "order_id / po_id / transfer_id terkait"
+        datetime created_at
+    }
+
+    stock_transfer {
+        bigint transfer_id PK "AUTO_INCREMENT"
+        bigint source_branch_id FK "FK -> branch.branch_id"
+        bigint dest_branch_id FK "FK -> branch.branch_id"
+        enum status "requested | in_transit | received"
+    }
+
+    supplier {
+        bigint supplier_id PK "AUTO_INCREMENT"
+        varchar name
+        varchar terms "payment terms"
+    }
+
+    purchase_order {
+        bigint po_id PK "AUTO_INCREMENT"
+        bigint supplier_id FK "FK -> supplier.supplier_id"
+        enum status "draft | approved | received | cancelled"
+        date order_date
+    }
+
+    purchase_order_item {
+        bigint po_item_id PK "AUTO_INCREMENT"
+        bigint po_id FK "FK -> purchase_order.po_id"
+        bigint product_id FK "FK -> product.product_id"
+        int quantity
+    }
+
+    appointment {
+        bigint appointment_id PK "AUTO_INCREMENT"
+        bigint customer_id FK "FK -> customer.customer_id"
+        bigint employee_id FK "FK -> employee.employee_id"
+        bigint branch_id FK "FK -> branch.branch_id"
+        bigint service_id FK "FK -> service.service_id"
+        enum type "regular | home_service | wedding"
+        varchar address "NULLABLE, wajib jika type != regular"
+        datetime slot_time
+        enum status "booked | checked_in | completed | no_show | cancelled"
+    }
+
+    orders {
+        bigint order_id PK "AUTO_INCREMENT"
+        bigint customer_id FK "FK -> customer.customer_id"
+        bigint branch_id FK "FK -> branch.branch_id"
+        bigint employee_id FK "FK -> employee.employee_id"
+        bigint promotion_id FK "FK -> promotion.promotion_id, NULLABLE"
+        decimal total
+        varchar channel "pos | future: marketplace"
+        enum status "open | paid | void | refunded"
+        datetime created_at
+    }
+
+    order_item {
+        bigint order_item_id PK "AUTO_INCREMENT"
+        bigint order_id FK "FK -> orders.order_id"
+        bigint service_id FK "FK -> service.service_id, NULLABLE"
+        bigint product_id FK "FK -> product.product_id, NULLABLE"
+        int quantity
+        decimal price "harga saat transaksi, immutable"
+    }
+
+    payment {
+        bigint payment_id PK "AUTO_INCREMENT"
+        bigint order_id FK "FK -> orders.order_id"
+        enum method "cash | qris | debit | credit | transfer | ewallet"
+        decimal amount
+    }
+
+    commission {
+        bigint commission_id PK "AUTO_INCREMENT"
+        bigint employee_id FK "FK -> employee.employee_id"
+        bigint order_id FK "FK -> orders.order_id"
+        decimal amount
+    }
+
+    promotion {
+        bigint promotion_id PK "AUTO_INCREMENT"
+        varchar name
+        enum rule_type "percentage | flat | bundle"
+        decimal discount_value
+        enum scope_level "holding | branch"
+    }
+
+    attendance {
+        bigint attendance_id PK "AUTO_INCREMENT"
+        bigint employee_id FK "FK -> employee.employee_id"
+        datetime clock_in
+        datetime clock_out "NULLABLE"
+        enum method "pin | face_recognition"
+    }
+
+    shift_schedule {
+        bigint schedule_id PK "AUTO_INCREMENT"
+        bigint employee_id FK "FK -> employee.employee_id"
+        bigint branch_id FK "FK -> branch.branch_id"
+        date shift_date
+        varchar shift_time
+    }
+
+    audit_log {
+        bigint event_id PK "AUTO_INCREMENT"
+        bigint user_id FK "FK -> app_user.user_id"
+        varchar action "void | refund | price_override | stock_adjustment"
+        varchar entity "nama tabel target"
+        bigint entity_id "PK tabel target"
+        text before_value "NULLABLE"
+        text after_value "NULLABLE"
+        datetime created_at
+    }
+
+    chart_of_accounts {
+        bigint account_id PK "AUTO_INCREMENT"
+        varchar account_code "UNIQUE, misal 1-1000"
+        varchar account_name
+        enum account_type "asset | liability | equity | revenue | expense"
+    }
+
+    journal_entry {
+        bigint journal_id PK "AUTO_INCREMENT"
+        bigint branch_id FK "FK -> branch.branch_id"
+        bigint fiscal_period_id FK "FK -> fiscal_period.fiscal_period_id"
+        varchar reference "order_id / po_id / payroll_id terkait"
+        datetime created_at
+    }
+
+    journal_line {
+        bigint line_id PK "AUTO_INCREMENT"
+        bigint journal_id FK "FK -> journal_entry.journal_id"
+        bigint account_id FK "FK -> chart_of_accounts.account_id"
+        decimal debit "default 0"
+        decimal credit "default 0"
+    }
+
+    fiscal_period {
+        bigint fiscal_period_id PK "AUTO_INCREMENT"
+        date period_start
+        date period_end
+        enum status "open | closed"
+    }
+
+    bank_reconciliation {
+        bigint reconciliation_id PK "AUTO_INCREMENT"
+        bigint payment_id FK "FK -> payment.payment_id"
+        decimal settlement_amount
+        decimal gateway_fee
+        datetime matched_at
+    }

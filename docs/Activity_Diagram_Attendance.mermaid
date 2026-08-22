@@ -1,0 +1,38 @@
+flowchart TD
+    Start([Karyawan datang ke cabang]) --> BukaApp[Buka /attendance/clock-in]
+    BukaApp --> PilihMetode{Metode verifikasi}
+    PilihMetode -->|PIN| InputPIN[Input PIN]
+    PilihMetode -->|Face Recognition| ScanWajah[Scan wajah via kamera]
+
+    InputPIN --> Validasi{Valid?}
+    ScanWajah --> Validasi
+
+    Validasi -->|Tidak| Gagal[Tampilkan error\nminta ulang]
+    Gagal --> PilihMetode
+    Validasi -->|Ya| CatatClockIn[Catat clock_in timestamp\n+ method + employee_id]
+    CatatClockIn --> MulaiKerja([Mulai shift kerja])
+
+    MulaiKerja --> ButuhIstirahat{Perlu istirahat?}
+    ButuhIstirahat -->|Ya| MulaiBreak[Tekan Mulai Istirahat]
+    MulaiBreak --> SelesaiBreak[Tekan Selesai Istirahat]
+    SelesaiBreak --> LanjutKerja[Lanjut kerja]
+    ButuhIstirahat -->|Tidak| LanjutKerja
+
+    LanjutKerja --> SelesaiShift{Waktu pulang?}
+    SelesaiShift -->|Belum| ButuhIstirahat
+    SelesaiShift -->|Ya| BukaClockOut[Buka /attendance/clock-out]
+
+    BukaClockOut --> PilihMetode2{Metode verifikasi}
+    PilihMetode2 -->|PIN| InputPIN2[Input PIN]
+    PilihMetode2 -->|Face Recognition| ScanWajah2[Scan wajah]
+
+    InputPIN2 --> Validasi2{Valid?}
+    ScanWajah2 --> Validasi2
+
+    Validasi2 -->|Tidak| Gagal2[Error, minta ulang]
+    Gagal2 --> PilihMetode2
+    Validasi2 -->|Ya| CatatClockOut[Catat clock_out timestamp]
+    CatatClockOut --> Selesai([Karyawan boleh pulang])
+
+    note1[Catatan: sistem tidak bisa menahan\nkaryawan secara fisik — ini enforcement\nproses, bukan penguncian fisik]
+    Selesai -.-> note1

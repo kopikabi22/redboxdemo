@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RedBox ERP — Operasional Cabang (POV Karyawan)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@1,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0A0A; --bg-raised:#141416; --surface:#1A1A1C; --surface-2:#232327;
+  --border:#2E2E32; --red:#C1121F; --red-bright:#E63946; --gold:#D4A017; --gold-bright:#F59E0B;
+  --text:#F3F1EC; --text-muted:#B7B6BC; --text-faint:#84838A;
+  --warn:#F59E0B; --danger:#E63946; --ok:#3FAE6A;
+  --font-display:'Bebas Neue',sans-serif; --font-accent:'Playfair Display',serif; --font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;-webkit-font-smoothing:antialiased;}
+button{font-family:var(--font-body);}
+::selection{background:var(--red);color:#fff;}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px;}
+
+/* ---------- LOGIN ---------- */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;background:
+  radial-gradient(circle at 20% 20%, rgba(193,18,31,.15), transparent 40%),
+  radial-gradient(circle at 80% 80%, rgba(212,160,23,.12), transparent 40%), var(--bg);}
+.login-brand{font-family:var(--font-display);font-size:44px;letter-spacing:1px;display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.login-brand .box{width:18px;height:18px;background:var(--red);box-shadow:4px 4px 0 var(--gold);display:inline-block;}
+.login-sub{font-family:var(--font-accent);font-style:italic;color:var(--text-faint);margin-bottom:36px;}
+.login-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;max-width:760px;width:100%;}
+.emp-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;cursor:pointer;transition:.15s;text-align:left;}
+.emp-card:hover{border-color:var(--gold-bright);transform:translateY(-2px);}
+.emp-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;}
+.emp-name{font-weight:700;font-size:14.5px;}
+.emp-role{color:var(--gold-bright);font-size:12px;font-weight:600;margin-top:2px;}
+.emp-branch{color:var(--text-faint);font-size:11.5px;margin-top:6px;}
+
+/* ---------- APP SHELL ---------- */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+.sidebar{background:var(--bg-raised);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;}
+.brand{padding:20px 18px 14px;border-bottom:1px solid var(--border);}
+.brand-mark{font-family:var(--font-display);font-size:24px;letter-spacing:1px;display:flex;align-items:center;gap:8px;}
+.brand-mark .box{width:12px;height:12px;background:var(--red);box-shadow:3px 3px 0 var(--gold);display:inline-block;}
+.brand-tag{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+.nav{padding:14px 10px;flex:1;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:6px;cursor:pointer;color:var(--text-muted);font-weight:600;font-size:13.5px;border-left:2px solid transparent;margin-bottom:2px;}
+.nav-item svg{width:16px;height:16px;stroke:currentColor;flex-shrink:0;}
+.nav-item:hover{background:var(--surface);color:var(--text);}
+.nav-item.active{background:var(--surface-2);color:var(--text);border-left:2px solid var(--gold-bright);}
+.nav-item.active svg{stroke:var(--gold-bright);}
+.sidebar-foot{padding:14px 16px;border-top:1px solid var(--border);}
+.logout-btn{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text-muted);padding:9px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:600;}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+
+.main{display:flex;flex-direction:column;min-height:100vh;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 26px;border-bottom:1px solid var(--border);background:var(--bg-raised);position:sticky;top:0;z-index:5;gap:14px;flex-wrap:wrap;}
+.topbar-title{font-family:var(--font-display);font-size:22px;letter-spacing:.5px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.branch-chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;color:var(--gold-bright);}
+.role-chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:8px;}
+.role-chip .avatar{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:inline-block;}
+.content{padding:22px 26px 60px;flex:1;}
+
+/* ---------- shared bits ---------- */
+.eyebrow{font-family:var(--font-accent);font-style:italic;color:var(--gold-bright);font-size:13px;margin:0 0 2px;}
+.section-title{font-family:var(--font-display);font-size:28px;letter-spacing:.5px;margin:0 0 14px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;}
+.btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:6px;cursor:pointer;font-weight:700;font-size:13px;}
+.btn:hover{border-color:var(--gold-bright);}
+.btn-primary{background:linear-gradient(180deg,var(--red-bright),var(--red));border-color:var(--red);color:#fff;}
+.btn-gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-color:var(--gold);color:#221a03;}
+.btn-ghost{background:transparent;}
+.btn-block{width:100%;}
+.btn-danger{background:linear-gradient(180deg,var(--danger),#a11e28);border-color:var(--danger);color:#fff;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-ok{background:rgba(63,174,106,.15);color:var(--ok);}
+.badge-warn{background:rgba(245,158,11,.15);color:var(--warn);}
+.badge-danger{background:rgba(230,57,70,.15);color:var(--danger);}
+.badge-gold{background:rgba(212,160,23,.18);color:var(--gold-bright);}
+.money{font-variant-numeric:tabular-nums;font-weight:700;}
+.gold{color:var(--gold-bright);}
+.text-muted{color:var(--text-muted);}
+.text-faint{color:var(--text-faint);font-size:12px;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-faint);padding:8px 10px;border-bottom:1px solid var(--border);}
+td{padding:10px 10px;border-bottom:1px solid var(--border);font-size:13px;}
+tr:last-child td{border-bottom:none;}
+.empty-state{padding:40px 20px;text-align:center;color:var(--text-faint);border:1px dashed var(--border);border-radius:8px;}
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surface-2);color:var(--text-muted);}
+
+/* ---------- POS layout ---------- */
+.pos-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
+.pos-tabs{display:flex;gap:8px;margin-bottom:14px;}
+.pos-tab-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-muted);padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12.5px;}
+.pos-tab-btn.active{background:var(--surface-2);color:var(--text);border-color:var(--gold-bright);}
+.item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.item-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;}
+.item-card:hover{border-color:var(--gold-bright);}
+.item-card .nm{font-weight:700;font-size:13px;margin-bottom:6px;}
+.item-card .pr{color:var(--gold-bright);font-weight:700;font-size:13.5px;}
+.item-card .st{margin-top:6px;}
+.cart-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;position:sticky;top:86px;}
+.cart-customer{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:12px;cursor:pointer;}
+.cart-list{max-height:260px;overflow-y:auto;margin-bottom:10px;}
+.cart-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:8px;}
+.cart-row .nm{font-size:12.5px;font-weight:600;}
+.qty-ctl{display:flex;align-items:center;gap:6px;}
+.qty-ctl button{width:22px;height:22px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);cursor:pointer;font-weight:700;}
+.cart-summary-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12.5px;}
+.cart-summary-row.total{font-size:16px;padding-top:8px;border-top:1px solid var(--border);margin-top:6px;}
+
+/* ---------- modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--bg-raised);border:1px solid var(--border);border-radius:10px;width:100%;max-width:440px;max-height:88vh;display:flex;flex-direction:column;}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;padding:18px 20px 12px;border-bottom:1px solid var(--border);}
+.modal-eyebrow{font-family:var(--font-accent);font-style:italic;color:var(--gold-bright);font-size:12px;}
+.modal-title{font-family:var(--font-display);font-size:22px;letter-spacing:.3px;}
+.modal-close{cursor:pointer;color:var(--text-faint);font-size:18px;padding:2px 6px;}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:16px 20px;overflow-y:auto;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;}
+.modal-foot button{flex:1;}
+.field-label{font-size:11.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px;}
+.text-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:6px;font-size:13.5px;}
+.kv{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px dashed var(--border);}
+.kv:last-child{border-bottom:none;}
+
+/* ---------- custom numpad (NO native keyboard) ---------- */
+.numpad-display{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:right;font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;margin-bottom:14px;min-height:56px;letter-spacing:1px;}
+.numpad-display.masked{letter-spacing:8px;text-align:center;}
+.numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.numpad-key{background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:19px;font-weight:700;padding:16px 0;border-radius:8px;cursor:pointer;}
+.numpad-key:active{background:var(--surface-2);border-color:var(--gold-bright);}
+.numpad-key.wide{grid-column:span 1;}
+.numpad-err{color:var(--danger);font-size:12.5px;text-align:center;margin-top:8px;min-height:16px;}
+
+/* ---------- pay method grid ---------- */
+.pay-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+.pay-opt{background:var(--surface);border:1px solid var(--border);padding:12px;border-radius:8px;text-align:center;cursor:pointer;font-weight:700;font-size:12.5px;}
+.pay-opt.active{border-color:var(--gold-bright);background:var(--surface-2);color:var(--gold-bright);}
+
+@media(max-width:900px){
+  .app{grid-template-columns:1fr;}
+  .sidebar{position:relative;height:auto;}
+  .pos-grid{grid-template-columns:1fr;}
+  .cart-box{position:relative;top:0;}
+}
+</style>
+</head>
+<body>
+
+<div id="login-view" class="login-screen">
+  <div class="login-brand"><span class="box"></span>REDBOX ERP</div>
+  <div class="login-sub">Operasional Cabang — pilih akun Anda</div>
+  <div class="login-cards" id="login-cards"></div>
+  <div class="text-faint" style="margin-top:22px;">Tier 1 demo — data tersimpan lokal di browser ini.</div>
+</div>
+
+<div id="app-view" class="app" style="display:none;">
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><span class="box"></span>REDBOX</div>
+      <div class="brand-tag">POV Karyawan</div>
+    </div>
+    <div class="nav" id="nav-items"></div>
+    <div class="sidebar-foot">
+      <button class="logout-btn" onclick="rbLogout()">Keluar / Ganti Akun</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">POS</div>
+      <div class="topbar-right">
+        <div class="branch-chip" id="branch-chip">—</div>
+        <div class="role-chip"><span class="avatar"></span><span id="emp-name-chip">—</span></div>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<script>
+/* ============================================================
+   RedBox ERP — Demo Data Layer (Tier 1)
+   Semua data disimpan di localStorage browser (bukan cloud/DB).
+   File ini dipakai bersama oleh karyawan.html & manajemen.html.
+   Supaya data benar-benar nyambung antara 2 file, buka keduanya
+   lewat local server yang sama origin (lihat CARA-JALANKAN.txt),
+   BUKAN cuma double-click file (beberapa browser mengisolasi
+   localStorage per file saat dibuka via file://).
+   ============================================================ */
+
+const RB_KEYS = {
+  branches: 'rb_branches',
+  employees: 'rb_employees',
+  customers: 'rb_customers',
+  services: 'rb_services',
+  products: 'rb_products',
+  inventory: 'rb_inventory',        // {product_id, branch_id, qty}
+  stockMoves: 'rb_stock_moves',
+  transactions: 'rb_transactions',
+  cashMoves: 'rb_cash_moves',
+  attendance: 'rb_attendance',
+  seeded: 'rb_seeded_v1'
+};
+/* Sesi login SENGAJA dipisah per POV (walau data lain di atas sama-sama dibaca/tulis
+   oleh kedua file) — supaya login di Manajemen tidak otomatis ikut login-kan POV
+   Karyawan dengan akun yang sama, dan sebaliknya. Tiap file pass namespace sendiri. */
+function rbSessionKey(ns) { return 'rb_session_' + (ns || 'default'); }
+
+function rbGet(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : (fallback !== undefined ? fallback : []);
+  } catch (e) {
+    console.error('rbGet error', key, e);
+    return fallback !== undefined ? fallback : [];
+  }
+}
+function rbSet(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    console.error('rbSet error', key, e);
+    return false;
+  }
+}
+function rbUid(prefix) {
+  return (prefix || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function rbRupiah(n) {
+  n = Math.round(n || 0);
+  return 'Rp ' + n.toLocaleString('id-ID');
+}
+function rbNow() { return new Date().toISOString(); }
+function rbToday() { return new Date().toISOString().slice(0, 10); }
+
+/* ---------- Available Stock helper (satu fungsi, dipakai ulang — arsitektur wajib) ---------- */
+function rbAvailableStock(productId, branchId) {
+  const inv = rbGet(RB_KEYS.inventory).find(i => i.product_id === productId && i.branch_id === branchId);
+  return inv ? inv.qty : 0;
+}
+function rbStockStatus(qty, lowStock) {
+  lowStock = lowStock || 10;
+  if (qty <= 0) return 'habis';
+  if (qty <= lowStock) return 'rendah';
+  return 'cukup';
+}
+
+/* ---------- Stock movement (ledger, append-only) ---------- */
+function rbRecordStockMove({ productId, branchId, type, qty, ref, note, actor }) {
+  const moves = rbGet(RB_KEYS.stockMoves);
+  moves.push({
+    id: rbUid('mov'), product_id: productId, branch_id: branchId,
+    type, qty, ref: ref || '', note: note || '', actor: actor || '',
+    timestamp: rbNow()
+  });
+  rbSet(RB_KEYS.stockMoves, moves);
+
+  const inv = rbGet(RB_KEYS.inventory);
+  let row = inv.find(i => i.product_id === productId && i.branch_id === branchId);
+  if (!row) {
+    row = { product_id: productId, branch_id: branchId, qty: 0 };
+    inv.push(row);
+  }
+  if (type === 'in' || type === 'opname_add') row.qty += qty;
+  else if (type === 'out' || type === 'sale' || type === 'opname_sub') row.qty -= qty;
+  else if (type === 'opname_set') row.qty = qty;
+  if (row.qty < 0) row.qty = 0;
+  rbSet(RB_KEYS.inventory, inv);
+}
+
+/* ============================================================
+   SEED DATA — dijalankan sekali (dicek via rb_seeded_v1)
+   ============================================================ */
+function rbSeedIfEmpty() {
+  if (rbGet(RB_KEYS.seeded, false)) return;
+
+  const branches = [
+    { id: 'br_bypass', name: 'Bypass', city: 'Cirebon', province: 'Jawa Barat', address: 'Jl. Bypass Ir. H. Juanda', phone: '0231-500001' },
+    { id: 'br_samadikun', name: 'Samadikun', city: 'Cirebon', province: 'Jawa Barat', address: 'Jl. Samadikun', phone: '0231-500002' },
+    { id: 'br_csbmall', name: 'CSB Mall', city: 'Cirebon', province: 'Jawa Barat', address: 'CSB Mall Lt. 1', phone: '0231-500003' },
+    { id: 'br_sumber', name: 'Sumber', city: 'Kabupaten Cirebon', province: 'Jawa Barat', address: 'Jl. Raya Sumber', phone: '0231-500004' },
+    { id: 'br_tegal', name: 'Tegal', city: 'Kota Tegal', province: 'Jawa Tengah', address: 'Jl. Diponegoro, Tegal', phone: '0283-500005' }
+  ];
+
+  const employees = [
+    { id: 'emp_dedi', name: 'Dedi Kurniawan', role: 'Kasir', branch_id: 'br_bypass', pin: '1111' },
+    { id: 'emp_rio', name: 'Rio Saputra', role: 'Barber', branch_id: 'br_bypass', pin: '2222' },
+    { id: 'emp_fajar', name: 'Fajar Ramadhan', role: 'Barber', branch_id: 'br_samadikun', pin: '3333' },
+    { id: 'emp_nita', name: 'Nita Amelia', role: 'Kasir', branch_id: 'br_samadikun', pin: '4444' },
+    { id: 'emp_manager_bypass', name: 'Yusuf Hidayat', role: 'BranchManager', branch_id: 'br_bypass', pin: '5555' },
+    { id: 'emp_owner', name: 'Bpk. Herman (Owner)', role: 'Owner', branch_id: 'br_bypass', pin: '9999' }
+  ];
+
+  const customers = [
+    { id: 'cust_andi', name: 'Andi Pratama', phone: '081234567890', type: 'member', tier: 'Gold', points: 340, createdAt: rbNow() },
+    { id: 'cust_budi', name: 'Budi Santoso', phone: '081322114478', type: 'member', tier: 'Silver', points: 120, createdAt: rbNow() },
+    { id: 'cust_citra', name: 'Citra Dewi', phone: '085777901123', type: 'member', tier: 'Platinum', points: 980, createdAt: rbNow() },
+    { id: 'cust_reza', name: 'Reza Firmansyah', phone: '082144569902', type: 'member', tier: 'Bronze', points: 15, createdAt: rbNow() }
+  ];
+
+  const services = [
+    { id: 'svc_haircut', name: 'Haircut Reguler', category: 'Rambut', duration: 30, price: 60000, commission: 20 },
+    { id: 'svc_haircut_premium', name: 'Haircut Premium + Styling', category: 'Rambut', duration: 45, price: 95000, commission: 25 },
+    { id: 'svc_shave', name: 'Shaving Klasik', category: 'Cukur', duration: 20, price: 45000, commission: 20 },
+    { id: 'svc_coloring', name: 'Hair Coloring', category: 'Rambut', duration: 60, price: 150000, commission: 20 },
+    { id: 'svc_facial', name: 'Facial Treatment', category: 'Perawatan', duration: 30, price: 80000, commission: 20 }
+  ];
+
+  const products = [
+    { id: 'prd_pomade', sku: 'SKU-0001', name: 'Pomade Matte 100g', category: 'Styling', brand: 'RedBox Grooming', cost: 25000, price: 55000, lowStock: 10 },
+    { id: 'prd_shampoo', sku: 'SKU-0002', name: 'Shampoo Anti Ketombe 200ml', category: 'Perawatan Rambut', brand: 'RedBox Grooming', cost: 18000, price: 40000, lowStock: 10 },
+    { id: 'prd_beardoil', sku: 'SKU-0003', name: 'Beard Oil 30ml', category: 'Grooming', brand: 'RedBox Grooming', cost: 30000, price: 65000, lowStock: 5 },
+    { id: 'prd_wax', sku: 'SKU-0004', name: 'Hair Wax Strong Hold', category: 'Styling', brand: 'RedBox Grooming', cost: 22000, price: 50000, lowStock: 10 }
+  ];
+
+  rbSet(RB_KEYS.branches, branches);
+  rbSet(RB_KEYS.employees, employees);
+  rbSet(RB_KEYS.customers, customers);
+  rbSet(RB_KEYS.services, services);
+  rbSet(RB_KEYS.products, products);
+  rbSet(RB_KEYS.inventory, []);
+  rbSet(RB_KEYS.stockMoves, []);
+  rbSet(RB_KEYS.transactions, []);
+  rbSet(RB_KEYS.cashMoves, []);
+  rbSet(RB_KEYS.attendance, []);
+
+  // Stok awal tiap produk di tiap cabang (biar demo langsung ada isinya)
+  branches.forEach(b => {
+    products.forEach(p => {
+      const startQty = p.id === 'prd_beardoil' ? 4 : (p.id === 'prd_wax' ? 8 : 30);
+      rbRecordStockMove({ productId: p.id, branchId: b.id, type: 'in', qty: startQty, ref: 'SEED', note: 'Stok awal demo', actor: 'system' });
+    });
+  });
+
+  rbSet(RB_KEYS.seeded, true);
+}
+rbSeedIfEmpty();
+
+/* ---------- Session helper (namespaced per POV — lihat rbSessionKey) ---------- */
+function rbGetSession(ns) { return rbGet(rbSessionKey(ns), null); }
+function rbSetSession(emp, ns) { rbSet(rbSessionKey(ns), emp); }
+function rbClearSession(ns) { localStorage.removeItem(rbSessionKey(ns)); }
+
+</script>
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+let CURRENT_EMP = null;
+let CART = { customer: null, items: [] };
+let PAY_METHOD = 'Cash';
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+function renderLogin() {
+  const emps = rbGet(RB_KEYS.employees).filter(e => e.role === 'Kasir' || e.role === 'Barber');
+  const branches = rbGet(RB_KEYS.branches);
+  const branchName = id => (branches.find(b => b.id === id) || {}).name || '—';
+  document.getElementById('login-cards').innerHTML = emps.map(e => `
+    <div class="emp-card" onclick="startPinLogin('${e.id}')">
+      <div class="emp-avatar">${e.name.charAt(0)}</div>
+      <div class="emp-name">${e.name}</div>
+      <div class="emp-role">${e.role === 'Kasir' ? 'Kasir' : 'Barber'}</div>
+      <div class="emp-branch">Cabang ${branchName(e.branch_id)}</div>
+    </div>`).join('');
+}
+
+let PIN_BUFFER = '';
+let PIN_TARGET_EMP = null;
+
+function startPinLogin(empId) {
+  PIN_TARGET_EMP = rbGet(RB_KEYS.employees).find(e => e.id === empId);
+  openNumpadModal({
+    eyebrow: 'Masuk',
+    title: 'Masukkan PIN — ' + PIN_TARGET_EMP.name,
+    maxLength: 4,
+    masked: true,
+    onConfirm: (val) => {
+      if (val === PIN_TARGET_EMP.pin) {
+        closeModal();
+        CURRENT_EMP = PIN_TARGET_EMP;
+        rbSetSession(CURRENT_EMP, 'karyawan');
+        boot();
+      } else {
+        return 'PIN salah, coba lagi.';
+      }
+    }
+  });
+}
+
+function rbLogout() {
+  rbClearSession('karyawan');
+  CURRENT_EMP = null;
+  document.getElementById('app-view').style.display = 'none';
+  document.getElementById('login-view').style.display = 'flex';
+  renderLogin();
+}
+
+/* ============================================================
+   NUMPAD MODAL (dipakai untuk SEMUA input angka — PIN, HP, tunai,
+   qty opname — supaya tidak memicu keyboard angka bawaan Android)
+   ============================================================ */
+function openNumpadModal({ eyebrow, title, maxLength, masked, initial, allowDecimal, onConfirm, confirmLabel }) {
+  PIN_BUFFER = initial || '';
+  const render = () => {
+    const display = masked ? '•'.repeat(PIN_BUFFER.length).padEnd(maxLength || 4, ' ') : (PIN_BUFFER || '0');
+    document.getElementById('modal-box').innerHTML = `
+      <div class="modal-head">
+        <div><div class="modal-eyebrow">${eyebrow}</div><div class="modal-title">${title}</div></div>
+        <div class="modal-close" onclick="closeModal()">✕</div>
+      </div>
+      <div class="modal-body">
+        <div class="numpad-display ${masked ? 'masked' : ''}">${masked ? display : (allowDecimal ? PIN_BUFFER || '0' : 'Rp ' + Number(PIN_BUFFER || 0).toLocaleString('id-ID'))}</div>
+        <div class="numpad-grid">
+          ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="numpad-key" onclick="numpadPress('${n}')">${n}</button>`).join('')}
+          <button class="numpad-key" onclick="numpadPress('C')">C</button>
+          <button class="numpad-key" onclick="numpadPress('0')">0</button>
+          <button class="numpad-key" onclick="numpadPress('DEL')">⌫</button>
+        </div>
+        <div class="numpad-err" id="numpad-err"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+        <button class="btn btn-primary" onclick="numpadConfirm()">${confirmLabel || 'Konfirmasi'}</button>
+      </div>`;
+  };
+  window._numpadState = { maxLength: maxLength || 12, masked, onConfirm };
+  document.getElementById('modal-overlay').classList.add('open');
+  render();
+  window._numpadRender = render;
+}
+function numpadPress(k) {
+  const st = window._numpadState;
+  if (k === 'C') { PIN_BUFFER = ''; }
+  else if (k === 'DEL') { PIN_BUFFER = PIN_BUFFER.slice(0, -1); }
+  else { if (PIN_BUFFER.length < st.maxLength) PIN_BUFFER += k; }
+  document.getElementById('numpad-err').textContent = '';
+  window._numpadRender();
+}
+function numpadConfirm() {
+  const st = window._numpadState;
+  if (st.masked && PIN_BUFFER.length < st.maxLength) {
+    document.getElementById('numpad-err').textContent = 'PIN harus ' + st.maxLength + ' digit.';
+    return;
+  }
+  const err = st.onConfirm(PIN_BUFFER);
+  if (err) { document.getElementById('numpad-err').textContent = err; }
+}
+
+/* ============================================================
+   GENERIC MODAL HELPERS
+   ============================================================ */
+function openModalHtml(eyebrow, title, bodyHtml, footHtml) {
+  document.getElementById('modal-box').innerHTML = `
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">${eyebrow}</div><div class="modal-title">${title}</div></div>
+      <div class="modal-close" onclick="closeModal()">✕</div>
+    </div>
+    <div class="modal-body">${bodyHtml}</div>
+    <div class="modal-foot">${footHtml}</div>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ============================================================
+   BOOT / ROUTING
+   ============================================================ */
+function boot() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('app-view').style.display = 'grid';
+  const branches = rbGet(RB_KEYS.branches);
+  const br = branches.find(b => b.id === CURRENT_EMP.branch_id);
+  document.getElementById('branch-chip').textContent = 'Cabang ' + (br ? br.name : '—');
+  document.getElementById('emp-name-chip').textContent = CURRENT_EMP.name + ' · ' + CURRENT_EMP.role;
+
+  const navDefs = CURRENT_EMP.role === 'Barber'
+    ? [{ id: 'attendance', label: 'Attendance & Break', icon: iconClock }]
+    : [
+        { id: 'pos', label: 'POS', icon: iconPos },
+        { id: 'attendance', label: 'Attendance & Break', icon: iconClock },
+        { id: 'inventory', label: 'Inventory', icon: iconBox }
+      ];
+  document.getElementById('nav-items').innerHTML = navDefs.map(n => `
+    <div class="nav-item" data-view="${n.id}" onclick="setView('${n.id}')">${n.icon}<span>${n.label}</span></div>`).join('');
+
+  setView(navDefs[0].id);
+}
+
+const iconPos = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+const iconClock = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>`;
+const iconBox = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`;
+
+const titleMap = { pos: 'POS — Transaksi', attendance: 'Attendance & Break', inventory: 'Inventory (Operasional)' };
+
+function setView(view) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+  document.getElementById('topbar-title').textContent = titleMap[view] || view;
+  const fn = { pos: renderPOS, attendance: renderAttendance, inventory: renderInventory }[view];
+  document.getElementById('content').innerHTML = fn ? fn() : '<div class="empty-state">Belum ada modul ini.</div>';
+  if (view === 'pos') afterRenderPOS();
+  if (view === 'attendance') afterRenderAttendance();
+  if (view === 'inventory') afterRenderInventory();
+}
+
+/* ============================================================
+   POS
+   ============================================================ */
+let POS_TAB = 'service';
+
+function renderPOS() {
+  return `
+  <div class="pos-grid">
+    <div>
+      <div class="pos-tabs">
+        <button class="pos-tab-btn ${POS_TAB === 'service' ? 'active' : ''}" onclick="setPosTab('service')">Service</button>
+        <button class="pos-tab-btn ${POS_TAB === 'product' ? 'active' : ''}" onclick="setPosTab('product')">Produk</button>
+        <button class="pos-tab-btn ${POS_TAB === 'cash' ? 'active' : ''}" onclick="setPosTab('cash')">Cash In / Out</button>
+        <button class="pos-tab-btn ${POS_TAB === 'held' ? 'active' : ''}" onclick="setPosTab('held')">Bill Tertahan</button>
+      </div>
+      <div id="pos-panel"></div>
+    </div>
+    <div class="cart-box">
+      <div class="eyebrow">Keranjang</div>
+      <div class="cart-customer" onclick="openCustomerPicker()">
+        <div class="text-faint" style="margin-bottom:2px;">Konsumen</div>
+        <div id="cart-cust-label" style="font-weight:700;">Ketuk untuk pilih (Member / Guest)</div>
+      </div>
+      <div class="cart-list" id="cart-list"></div>
+      <div id="cart-summary"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="holdCurrentBill()">Simpan Sementara</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="openPaymentModal()" id="btn-checkout">Bayar</button>
+      </div>
+    </div>
+  </div>`;
+}
+function afterRenderPOS() { setPosTab(POS_TAB); renderCart(); }
+
+function setPosTab(tab) {
+  POS_TAB = tab;
+  document.querySelectorAll('.pos-tab-btn').forEach((b, i) => {
+    const labels = ['service', 'product', 'cash', 'held'];
+    b.classList.toggle('active', labels[i] === tab);
+  });
+  const panel = document.getElementById('pos-panel');
+  if (tab === 'service') panel.innerHTML = renderItemGrid('service');
+  else if (tab === 'product') panel.innerHTML = renderItemGrid('product');
+  else if (tab === 'cash') panel.innerHTML = renderCashInOut();
+  else if (tab === 'held') panel.innerHTML = renderHeldBills();
+}
+
+function renderItemGrid(type) {
+  if (type === 'service') {
+    const list = rbGet(RB_KEYS.services);
+    return `<div class="item-grid">${list.map(s => `
+      <div class="item-card" onclick="addToCart('service','${s.id}')">
+        <div class="nm">${s.name}</div>
+        <div class="text-faint">${s.category} · ${s.duration} menit</div>
+        <div class="pr">${rbRupiah(s.price)}</div>
+      </div>`).join('')}</div>`;
+  } else {
+    const list = rbGet(RB_KEYS.products);
+    return `<div class="item-grid">${list.map(p => {
+      const qty = rbAvailableStock(p.id, CURRENT_EMP.branch_id);
+      const st = rbStockStatus(qty, p.lowStock);
+      const badgeClass = st === 'cukup' ? 'badge-ok' : (st === 'rendah' ? 'badge-warn' : 'badge-danger');
+      return `
+      <div class="item-card" onclick="addToCart('product','${p.id}')">
+        <div class="nm">${p.name}</div>
+        <div class="text-faint">${p.category}</div>
+        <div class="pr">${rbRupiah(p.price)}</div>
+        <div class="st"><span class="badge ${badgeClass}">${st}</span></div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+}
+
+function addToCart(type, id) {
+  const master = type === 'service' ? rbGet(RB_KEYS.services) : rbGet(RB_KEYS.products);
+  const item = master.find(m => m.id === id);
+  if (!item) return;
+  if (type === 'product') {
+    const available = rbAvailableStock(id, CURRENT_EMP.branch_id);
+    const inCart = CART.items.filter(i => i.id === id).reduce((s, i) => s + i.qty, 0);
+    if (inCart + 1 > available) { toast('Stok tidak cukup di cabang ini.'); return; }
+  }
+  const existing = CART.items.find(i => i.id === id && i.type === type);
+  if (existing) existing.qty += 1;
+  else CART.items.push({ type, id, name: item.name, price: item.price, qty: 1 });
+  renderCart();
+}
+function changeQty(idx, delta) {
+  const it = CART.items[idx];
+  if (!it) return;
+  if (it.type === 'product' && delta > 0) {
+    const available = rbAvailableStock(it.id, CURRENT_EMP.branch_id);
+    if (it.qty + delta > available) { toast('Stok tidak cukup.'); return; }
+  }
+  it.qty += delta;
+  if (it.qty <= 0) CART.items.splice(idx, 1);
+  renderCart();
+}
+
+function renderCart() {
+  document.getElementById('cart-cust-label').textContent = CART.customer
+    ? (CART.customer.type === 'member' ? CART.customer.name + ' · ' + CART.customer.tier : 'Guest · ' + CART.customer.phone)
+    : 'Ketuk untuk pilih (Member / Guest)';
+  const list = document.getElementById('cart-list');
+  if (!CART.items.length) {
+    list.innerHTML = '<div class="text-faint" style="padding:14px 0;">Keranjang masih kosong.</div>';
+  } else {
+    list.innerHTML = CART.items.map((it, idx) => `
+      <div class="cart-row">
+        <div style="flex:1;">
+          <div class="nm">${it.name}</div>
+          <div class="text-faint">${rbRupiah(it.price)}</div>
+        </div>
+        <div class="qty-ctl">
+          <button onclick="changeQty(${idx},-1)">−</button>
+          <span>${it.qty}</span>
+          <button onclick="changeQty(${idx},1)">+</button>
+        </div>
+      </div>`).join('');
+  }
+  const subtotal = CART.items.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = Math.round(subtotal * 0.1);
+  const total = subtotal + tax;
+  document.getElementById('cart-summary').innerHTML = `
+    <div class="cart-summary-row"><div class="text-muted">Subtotal</div><div class="money">${rbRupiah(subtotal)}</div></div>
+    <div class="cart-summary-row"><div class="text-muted">Pajak (10%)</div><div class="money">${rbRupiah(tax)}</div></div>
+    <div class="cart-summary-row total"><div>Total</div><div class="money gold">${rbRupiah(total)}</div></div>`;
+  document.getElementById('btn-checkout').disabled = CART.items.length === 0;
+}
+
+/* ---- customer picker ---- */
+let CUST_MODE = 'member';
+function openCustomerPicker() {
+  CUST_MODE = 'member';
+  renderCustomerPickerModal();
+}
+function renderCustomerPickerModal(query) {
+  query = (query || '').toLowerCase();
+  const customers = rbGet(RB_KEYS.customers).filter(c =>
+    !query || c.name.toLowerCase().includes(query) || c.phone.includes(query));
+  const body = `
+    <div class="pay-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="pay-opt ${CUST_MODE === 'member' ? 'active' : ''}" onclick="setCustMode('member')">Member</div>
+      <div class="pay-opt ${CUST_MODE === 'guest' ? 'active' : ''}" onclick="setCustMode('guest')">Guest</div>
+    </div>
+    <div id="cust-mode-body"></div>`;
+  openModalHtml('POS', 'Pilih Konsumen', body, `<button class="btn btn-ghost btn-block" onclick="closeModal()">Tutup</button>`);
+  renderCustModeBody(customers);
+}
+function setCustMode(mode) { CUST_MODE = mode; renderCustomerPickerModal(); }
+function renderCustModeBody(customers) {
+  const el = document.getElementById('cust-mode-body');
+  if (CUST_MODE === 'member') {
+    el.innerHTML = `
+      <input class="text-input" placeholder="Cari nama atau nomor HP..." oninput="filterCustList(this.value)" style="margin-bottom:10px;">
+      <div id="cust-list">${customerRows(customers)}</div>`;
+  } else {
+    el.innerHTML = `
+      <div class="field-label">Nomor HP Guest (wajib)</div>
+      <div class="text-input" style="cursor:pointer;" onclick="openGuestPhonePad()" id="guest-phone-display">Ketuk untuk isi nomor HP</div>
+      <div class="text-faint" style="margin-top:8px;">Guest tidak membayar aktivasi member. Kalau nanti daftar jadi member, riwayat transaksi tetap nyambung ke nomor HP ini.</div>`;
+  }
+}
+function filterCustList(q) {
+  const customers = rbGet(RB_KEYS.customers).filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || c.phone.includes(q));
+  document.getElementById('cust-list').innerHTML = customerRows(customers);
+}
+function customerRows(customers) {
+  if (!customers.length) return '<div class="text-faint" style="padding:10px 0;">Tidak ditemukan.</div>';
+  return customers.map(c => `
+    <div class="cart-row" style="cursor:pointer;" onclick='selectCustomer(${JSON.stringify(c).replace(/'/g, "&apos;")})'>
+      <div>
+        <div class="nm">${c.name}</div>
+        <div class="text-faint">${c.phone}</div>
+      </div>
+      <span class="badge badge-gold">${c.tier} · ${c.points} pts</span>
+    </div>`).join('');
+}
+function selectCustomer(c) { CART.customer = c; closeModal(); renderCart(); }
+function openGuestPhonePad() {
+  openNumpadModal({
+    eyebrow: 'Guest', title: 'Nomor HP Guest', maxLength: 13, masked: false, allowDecimal: true,
+    confirmLabel: 'Pakai Nomor Ini',
+    onConfirm: (val) => {
+      if (val.length < 8) return 'Nomor HP minimal 8 digit.';
+      CART.customer = { id: 'guest_' + val, name: 'Guest', phone: val, type: 'guest', tier: '-', points: 0 };
+      closeModal();
+      renderCart();
+    }
+  });
+}
+
+/* ---- hold bill ---- */
+function heldKey() { return 'rb_held_' + CURRENT_EMP.branch_id; }
+function holdCurrentBill() {
+  if (!CART.items.length) { toast('Keranjang kosong.'); return; }
+  const held = rbGet(heldKey());
+  held.push({ id: rbUid('hold'), customer: CART.customer, items: CART.items, savedAt: rbNow() });
+  rbSet(heldKey(), held);
+  CART = { customer: null, items: [] };
+  renderCart();
+  toast('Bill disimpan sementara.');
+  setPosTab('held');
+}
+function renderHeldBills() {
+  const held = rbGet(heldKey());
+  if (!held.length) return '<div class="empty-state">Belum ada bill tertahan.</div>';
+  return `<div class="card">${held.map(h => `
+    <div class="cart-row" style="cursor:pointer;" onclick="retrieveBill('${h.id}')">
+      <div>
+        <div class="nm">${h.customer ? h.customer.name : 'Tanpa konsumen'} — ${h.items.length} item</div>
+        <div class="text-faint">${new Date(h.savedAt).toLocaleTimeString('id-ID')}</div>
+      </div>
+      <span class="tag">Ambil</span>
+    </div>`).join('')}</div>`;
+}
+function retrieveBill(id) {
+  const held = rbGet(heldKey());
+  const found = held.find(h => h.id === id);
+  if (!found) return;
+  CART = { customer: found.customer, items: found.items };
+  rbSet(heldKey(), held.filter(h => h.id !== id));
+  renderCart();
+  setPosTab('service');
+}
+
+/* ---- cash in/out ---- */
+function renderCashInOut() {
+  const moves = rbGet(RB_KEYS.cashMoves).filter(m => m.branch_id === CURRENT_EMP.branch_id)
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const totalIn = moves.filter(m => m.type === 'in').reduce((s, m) => s + m.amount, 0);
+  const totalOut = moves.filter(m => m.type === 'out').reduce((s, m) => s + m.amount, 0);
+  return `
+    <div class="card" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div class="text-faint">Cash Masuk (otomatis dari transaksi)</div>
+        <div class="money gold" style="font-size:18px;">${rbRupiah(totalIn)}</div>
+        <div class="text-faint" style="margin-top:6px;">Cash Keluar (manual)</div>
+        <div class="money" style="font-size:18px;color:var(--danger);">${rbRupiah(totalOut)}</div>
+      </div>
+      <button class="btn btn-primary" onclick="openCashOutModal()">+ Catat Cash Keluar</button>
+    </div>
+    <div class="card">
+      ${moves.length ? `<table><thead><tr><th>Waktu</th><th>Tipe</th><th>Catatan</th><th style="text-align:right;">Jumlah</th></tr></thead><tbody>
+        ${moves.map(m => `<tr>
+          <td>${new Date(m.timestamp).toLocaleString('id-ID')}</td>
+          <td><span class="badge ${m.type === 'in' ? 'badge-ok' : 'badge-warn'}">${m.type === 'in' ? 'Masuk' : 'Keluar'}</span></td>
+          <td>${m.note || '-'}</td>
+          <td style="text-align:right;" class="money">${rbRupiah(m.amount)}</td>
+        </tr>`).join('')}</tbody></table>` : '<div class="empty-state">Belum ada catatan cash.</div>'}
+    </div>`;
+}
+let CASHOUT_AMOUNT = 0;
+let CASHOUT_NOTE = '';
+function openCashOutModal() {
+  openModalHtml('POS · Cash Out', 'Catat Cash Keluar', `
+    <div class="field-label">Alasan / Keterangan</div>
+    <input class="text-input" id="cashout-note" placeholder="Misal: beli galon air" value="${CASHOUT_NOTE}" oninput="CASHOUT_NOTE=this.value">
+    <div class="field-label">Jumlah</div>
+    <div class="text-input" style="cursor:pointer;" id="cashout-amount-display" onclick="openCashOutAmountPad()">${CASHOUT_AMOUNT ? rbRupiah(CASHOUT_AMOUNT) : 'Ketuk untuk isi jumlah'}</div>
+  `, `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="submitCashOut()">Simpan</button>`);
+}
+function openCashOutAmountPad() {
+  CASHOUT_NOTE = document.getElementById('cashout-note').value;
+  openNumpadModal({
+    eyebrow: 'Cash Out', title: 'Jumlah Cash Keluar', maxLength: 9,
+    onConfirm: (val) => {
+      CASHOUT_AMOUNT = Number(val || 0);
+      closeModal();
+      openCashOutModal();
+    }
+  });
+}
+function submitCashOut() {
+  const note = document.getElementById('cashout-note').value.trim();
+  if (!CASHOUT_AMOUNT) { toast('Isi jumlah dulu.'); return; }
+  const moves = rbGet(RB_KEYS.cashMoves);
+  moves.push({ id: rbUid('cash'), branch_id: CURRENT_EMP.branch_id, type: 'out', amount: CASHOUT_AMOUNT, note, actor: CURRENT_EMP.name, timestamp: rbNow() });
+  rbSet(RB_KEYS.cashMoves, moves);
+  CASHOUT_AMOUNT = 0;
+  CASHOUT_NOTE = '';
+  closeModal();
+  setPosTab('cash');
+}
+
+/* ---- payment ---- */
+let CASH_TENDERED = 0;
+function openPaymentModal() {
+  if (!CART.items.length) return;
+  PAY_METHOD = 'Cash';
+  CASH_TENDERED = 0;
+  renderPaymentModal();
+}
+function renderPaymentModal() {
+  const subtotal = CART.items.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = Math.round(subtotal * 0.1);
+  const total = subtotal + tax;
+  const methods = ['Cash', 'QRIS', 'Debit', 'Transfer', 'E-Wallet'];
+  const body = `
+    <div class="kv"><div>Total Tagihan</div><div class="money gold" style="font-size:17px;">${rbRupiah(total)}</div></div>
+    <div class="field-label">Metode Pembayaran</div>
+    <div class="pay-grid">${methods.map(m => `<div class="pay-opt ${PAY_METHOD === m ? 'active' : ''}" onclick="choosePayMethod('${m}',${total})">${m}</div>`).join('')}</div>
+    <div id="pay-extra"></div>`;
+  openModalHtml('POS', 'Bayar', body, `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" id="pay-confirm-btn" onclick="finalizePayment(${total})">Konfirmasi</button>`);
+  renderPayExtra(total);
+}
+function choosePayMethod(m, total) {
+  PAY_METHOD = m;
+  CASH_TENDERED = 0;
+  document.querySelectorAll('.pay-opt').forEach(el => el.classList.toggle('active', el.textContent === m));
+  renderPayExtra(total);
+}
+function renderPayExtra(total) {
+  const extra = document.getElementById('pay-extra');
+  const confirmBtn = document.getElementById('pay-confirm-btn');
+  if (PAY_METHOD === 'Cash') {
+    const change = CASH_TENDERED - total;
+    extra.innerHTML = `
+      <div class="field-label">Uang Tunai Diterima</div>
+      <div class="text-input" style="cursor:pointer;" id="cash-tendered-display" onclick="openCashTenderedPad(${total})">${CASH_TENDERED ? rbRupiah(CASH_TENDERED) : 'Ketuk untuk isi nominal'}</div>
+      <div class="kv" style="margin-top:8px;"><div>Kembalian</div><div class="money gold" id="cash-change">${rbRupiah(Math.max(change, 0))}</div></div>`;
+    confirmBtn.disabled = CASH_TENDERED < total;
+  } else {
+    extra.innerHTML = `<div class="text-faint" style="margin-top:6px;">Pastikan pembayaran ${PAY_METHOD} sudah dikonfirmasi di mesin EDC/aplikasi sebelum menekan Konfirmasi.</div>`;
+    confirmBtn.disabled = false;
+  }
+}
+function openCashTenderedPad(total) {
+  openNumpadModal({
+    eyebrow: 'Cash', title: 'Uang Tunai Diterima', maxLength: 9, confirmLabel: 'Pakai Nominal',
+    onConfirm: (val) => {
+      CASH_TENDERED = Number(val || 0);
+      renderPaymentModal();
+    }
+  });
+}
+function finalizePayment(total) {
+  const subtotal = CART.items.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = total - subtotal;
+  const trx = {
+    id: 'TRX-' + Date.now().toString().slice(-8),
+    branch_id: CURRENT_EMP.branch_id,
+    cashier_id: CURRENT_EMP.id,
+    cashier_name: CURRENT_EMP.name,
+    customer: CART.customer,
+    items: CART.items,
+    subtotal, tax, total,
+    method: PAY_METHOD,
+    cashTendered: PAY_METHOD === 'Cash' ? CASH_TENDERED : total,
+    change: PAY_METHOD === 'Cash' ? (CASH_TENDERED - total) : 0,
+    timestamp: rbNow()
+  };
+  const trxs = rbGet(RB_KEYS.transactions);
+  trxs.push(trx);
+  rbSet(RB_KEYS.transactions, trxs);
+
+  // deduct stock untuk produk (bukan service — belum ada BOM di Tier 1)
+  CART.items.filter(i => i.type === 'product').forEach(i => {
+    rbRecordStockMove({ productId: i.id, branchId: CURRENT_EMP.branch_id, type: 'sale', qty: i.qty, ref: trx.id, note: 'Penjualan POS', actor: CURRENT_EMP.name });
+  });
+
+  // catat cash masuk kalau metode cash
+  if (PAY_METHOD === 'Cash') {
+    const moves = rbGet(RB_KEYS.cashMoves);
+    moves.push({ id: rbUid('cash'), branch_id: CURRENT_EMP.branch_id, type: 'in', amount: total, note: 'Transaksi ' + trx.id, actor: CURRENT_EMP.name, timestamp: rbNow() });
+    rbSet(RB_KEYS.cashMoves, moves);
+  }
+
+  CART = { customer: null, items: [] };
+  openModalHtml('Transaksi Selesai', trx.id, `
+    <div class="kv"><div>Total</div><div class="money gold" style="font-size:17px;">${rbRupiah(total)}</div></div>
+    ${PAY_METHOD === 'Cash' ? `<div class="kv"><div>Kembalian</div><div class="money">${rbRupiah(trx.change)}</div></div>` : ''}
+    <div class="kv"><div>Metode</div><div>${PAY_METHOD}</div></div>
+    <div class="text-faint" style="margin-top:10px;">Poin loyalty & diskon tier member akan aktif di modul Membership & Loyalty (Tier 2).</div>
+  `, `<button class="btn btn-primary btn-block" onclick="closeModal(); setView('pos');">Selesai</button>`);
+}
+
+/* ============================================================
+   ATTENDANCE & BREAK
+   ============================================================ */
+function todaysAttendance() {
+  const all = rbGet(RB_KEYS.attendance);
+  return all.find(a => a.employee_id === CURRENT_EMP.id && a.date === rbToday());
+}
+function renderAttendance() {
+  const rec = todaysAttendance();
+  const history = rbGet(RB_KEYS.attendance).filter(a => a.employee_id === CURRENT_EMP.id)
+    .sort((a, b) => (b.date > a.date ? 1 : -1)).slice(0, 7);
+  const onBreak = rec && rec.breaks && rec.breaks.length && !rec.breaks[rec.breaks.length - 1].end;
+  return `
+    <div class="card" style="max-width:480px;margin-bottom:18px;">
+      <div class="eyebrow">Hari Ini — ${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+      <div class="kv"><div>Clock In</div><div>${rec ? new Date(rec.clockIn).toLocaleTimeString('id-ID') : '—'}</div></div>
+      <div class="kv"><div>Clock Out</div><div>${rec && rec.clockOut ? new Date(rec.clockOut).toLocaleTimeString('id-ID') : '—'}</div></div>
+      <div class="kv"><div>Status Istirahat</div><div>${onBreak ? '<span class="badge badge-warn">Sedang Istirahat</span>' : '<span class="badge badge-ok">Aktif Kerja</span>'}</div></div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        ${!rec ? `<button class="btn btn-primary" onclick="requestClock('in')">Clock In</button>` : ''}
+        ${rec && !rec.clockOut ? `<button class="btn btn-danger" onclick="requestClock('out')">Clock Out</button>` : ''}
+        ${rec && !rec.clockOut && !onBreak ? `<button class="btn btn-ghost" onclick="startBreak()">Mulai Istirahat</button>` : ''}
+        ${rec && !rec.clockOut && onBreak ? `<button class="btn btn-gold" onclick="endBreak()">Selesai Istirahat</button>` : ''}
+      </div>
+    </div>
+    <div class="eyebrow">Riwayat 7 Hari Terakhir</div>
+    <div class="card">
+      ${history.length ? `<table><thead><tr><th>Tanggal</th><th>Clock In</th><th>Clock Out</th><th>Istirahat</th></tr></thead><tbody>
+        ${history.map(h => `<tr>
+          <td>${h.date}</td>
+          <td>${new Date(h.clockIn).toLocaleTimeString('id-ID')}</td>
+          <td>${h.clockOut ? new Date(h.clockOut).toLocaleTimeString('id-ID') : '—'}</td>
+          <td>${(h.breaks || []).length}x</td>
+        </tr>`).join('')}</tbody></table>` : '<div class="empty-state">Belum ada riwayat.</div>'}
+    </div>
+    ${CURRENT_EMP.role === 'Barber' ? `<div class="text-faint" style="margin-top:14px;">Modul Appointment & Queue untuk Barber akan tersedia di Tier 2.</div>` : ''}
+  `;
+}
+function afterRenderAttendance() {}
+function requestClock(kind) {
+  openNumpadModal({
+    eyebrow: kind === 'in' ? 'Clock In' : 'Clock Out',
+    title: 'Konfirmasi PIN — ' + CURRENT_EMP.name,
+    maxLength: 4, masked: true,
+    onConfirm: (val) => {
+      if (val !== CURRENT_EMP.pin) return 'PIN salah.';
+      const all = rbGet(RB_KEYS.attendance);
+      if (kind === 'in') {
+        all.push({ id: rbUid('att'), employee_id: CURRENT_EMP.id, branch_id: CURRENT_EMP.branch_id, date: rbToday(), clockIn: rbNow(), clockOut: null, breaks: [] });
+      } else {
+        const rec = all.find(a => a.employee_id === CURRENT_EMP.id && a.date === rbToday());
+        if (rec) rec.clockOut = rbNow();
+      }
+      rbSet(RB_KEYS.attendance, all);
+      closeModal();
+      setView('attendance');
+    }
+  });
+}
+function startBreak() {
+  const all = rbGet(RB_KEYS.attendance);
+  const rec = all.find(a => a.employee_id === CURRENT_EMP.id && a.date === rbToday());
+  if (!rec) return;
+  rec.breaks.push({ start: rbNow(), end: null });
+  rbSet(RB_KEYS.attendance, all);
+  setView('attendance');
+}
+function endBreak() {
+  const all = rbGet(RB_KEYS.attendance);
+  const rec = all.find(a => a.employee_id === CURRENT_EMP.id && a.date === rbToday());
+  if (!rec) return;
+  const last = rec.breaks[rec.breaks.length - 1];
+  if (last) last.end = rbNow();
+  rbSet(RB_KEYS.attendance, all);
+  setView('attendance');
+}
+
+/* ============================================================
+   INVENTORY (operasional, sederhana)
+   ============================================================ */
+function renderInventory() {
+  const products = rbGet(RB_KEYS.products);
+  return `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+      <button class="btn btn-gold" onclick="window._opnameCounts={};openOpnameModal();">Stock Opname</button>
+    </div>
+    <div class="item-grid">
+      ${products.map(p => {
+        const qty = rbAvailableStock(p.id, CURRENT_EMP.branch_id);
+        const st = rbStockStatus(qty, p.lowStock);
+        const badgeClass = st === 'cukup' ? 'badge-ok' : (st === 'rendah' ? 'badge-warn' : 'badge-danger');
+        return `<div class="card">
+          <div class="nm" style="font-weight:700;margin-bottom:4px;">${p.name}</div>
+          <div class="text-faint" style="margin-bottom:8px;">${p.category}</div>
+          <span class="badge ${badgeClass}">${st.charAt(0).toUpperCase() + st.slice(1)}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="text-faint" style="margin-top:14px;">Penyesuaian stok penuh (adjustment manual, transfer antar-cabang) dilakukan di POV Manajemen dengan otorisasi.</div>
+  `;
+}
+function afterRenderInventory() {}
+function openOpnameModal() {
+  if (!window._opnameCounts) window._opnameCounts = {};
+  const products = rbGet(RB_KEYS.products);
+  const body = `
+    <div class="text-faint" style="margin-bottom:10px;">Masukkan hasil hitung fisik untuk tiap produk. Kosongkan kalau sama dengan sistem.</div>
+    ${products.map(p => {
+      const current = rbAvailableStock(p.id, CURRENT_EMP.branch_id);
+      return `<div class="kv">
+        <div>${p.name}<div class="text-faint">Sistem: ${current}</div></div>
+        <div class="text-input" style="width:110px;text-align:center;cursor:pointer;" id="opname-${p.id}" onclick="openOpnameCountPad('${p.id}')">Ketuk isi</div>
+      </div>`;
+    }).join('')}`;
+  openModalHtml('Inventory', 'Stock Opname', body, `<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="submitOpname()">Simpan Opname</button>`);
+}
+function openOpnameCountPad(productId) {
+  openNumpadModal({
+    eyebrow: 'Stock Opname', title: 'Hasil Hitung Fisik', maxLength: 5,
+    onConfirm: (val) => {
+      window._opnameCounts[productId] = Number(val || 0);
+      openOpnameModal();
+      // re-tampilkan nilai yang sudah dimasukkan sebelumnya (modal barusan dirender ulang)
+      Object.keys(window._opnameCounts).forEach(pid => {
+        const el = document.getElementById('opname-' + pid);
+        if (el) el.textContent = window._opnameCounts[pid];
+      });
+    }
+  });
+}
+function submitOpname() {
+  const counts = window._opnameCounts || {};
+  Object.keys(counts).forEach(pid => {
+    rbRecordStockMove({ productId: pid, branchId: CURRENT_EMP.branch_id, type: 'opname_set', qty: counts[pid], ref: 'OPNAME', note: 'Stock opname oleh ' + CURRENT_EMP.name, actor: CURRENT_EMP.name });
+  });
+  window._opnameCounts = {};
+  closeModal();
+  setView('inventory');
+  toast('Stock opname tersimpan.');
+}
+
+/* ============================================================
+   TOAST (sederhana)
+   ============================================================ */
+function toast(msg) {
+  let t = document.getElementById('rb-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'rb-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--gold-bright);color:var(--text);padding:10px 18px;border-radius:8px;font-size:13px;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.4);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.style.display = 'none'; }, 2200);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(function init() {
+  const sess = rbGetSession('karyawan');
+  if (sess) {
+    const fresh = rbGet(RB_KEYS.employees).find(e => e.id === sess.id);
+    if (fresh) { CURRENT_EMP = fresh; boot(); return; }
+  }
+  renderLogin();
+})();
+</script>
+</body>
+</html>

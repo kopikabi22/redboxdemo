@@ -1,0 +1,27 @@
+flowchart TD
+    Start([User buka aplikasi]) --> CekSesi{Session valid?}
+    CekSesi -->|Ya| Redirect[Redirect ke /home]
+    CekSesi -->|Tidak| FormLogin[Tampilkan form login]
+
+    FormLogin --> InputCred[Input credential/PIN]
+    InputCred --> Validasi{Kredensial valid?}
+    Validasi -->|Tidak| ErrorLogin[Tampilkan error]
+    ErrorLogin --> FormLogin
+    Validasi -->|Ya| BuatSesi[Buat session + tentukan role]
+
+    BuatSesi --> Redirect
+    Redirect --> CekRole{Role user?}
+
+    CekRole -->|Kasir| LangsungPOS[LANGSUNG ke /pos/new\ntanpa launcher\nnav: POS, Appointment, Attendance]
+    CekRole -->|Barber| LangsungQueue[LANGSUNG ke /appointment/queue\ntanpa launcher\nnav: Appointment, Attendance]
+    CekRole -->|Branch Manager/SPV| LauncherBM[Module Launcher kotak-kotak:\nPOS, Appointment, Attendance,\nInventory view, Cashier Closing Review]
+    CekRole -->|Owner/HQ| LauncherOwner[Module Launcher kotak-kotak:\nSEMUA modul, semua cabang]
+    CekRole -->|HR/Finance/Marketing/Purchasing/Warehouse/SysAdmin| ModulSpesifik[Module Launcher kotak-kotak\nsesuai domain masing-masing]
+
+    LangsungPOS --> End([Kasir langsung kerja])
+    LangsungQueue --> End2([Barber langsung kerja])
+    LauncherBM --> PilihModul[User pilih modul dari launcher]
+    LauncherOwner --> PilihModul
+    ModulSpesifik --> PilihModul
+    PilihModul --> BukaHalaman[Buka halaman modul terkait]
+    BukaHalaman --> End3([Selesai])

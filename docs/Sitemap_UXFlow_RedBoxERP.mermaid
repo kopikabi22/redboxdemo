@@ -1,0 +1,91 @@
+flowchart TD
+    Root([" / "]) --> Login[/login]
+    Login --> SesiCek{Session valid?}
+    SesiCek -->|Ya| Home[/home]
+    SesiCek -->|Tidak| FormLogin[Form Login\nPIN/Credential]
+    FormLogin --> Home
+
+    Home --> RoleCek{Role?}
+
+    RoleCek -->|Kasir| KasirLanding["LANGSUNG ke /pos/new\n(skip launcher)"]
+    RoleCek -->|Barber| BarberLanding["LANGSUNG ke /appointment/queue\n(skip launcher)"]
+    RoleCek -->|Branch Manager/SPV| LauncherBM[Module Launcher\nkotak-kotak]
+    RoleCek -->|Owner/HQ| LauncherOwner[Module Launcher\nSEMUA modul]
+
+    KasirLanding --> OpModule
+    BarberLanding --> OpModuleBarber
+
+    subgraph OpModule ["MODUL TERPADU: Operasional Cabang — akses Kasir (auto branch-scoped)"]
+        direction TB
+        TabPOS["Tab: POS"]
+        TabAppt["Tab: Appointment & Queue"]
+        TabAtt["Tab: Attendance & Break"]
+        TabInv["Tab: Inventory"]
+        TabClose["Tab: Cashier Closing"]
+
+        TabPOS --> POSNew["/pos/new"]
+        POSNew --> PilihKonsumen{Member atau Guest?}
+        PilihKonsumen -->|Member| CariMember["Cari dari daftar member\nnama/HP → tampil tier & poin"]
+        PilihKonsumen -->|Guest| InputHP["Input nomor HP\n(wajib, tanpa aktivasi)"]
+        CariMember --> Keranjang["Tambah item\nservice + produk retail"]
+        InputHP --> Keranjang
+        Keranjang --> TombolBayar["Tekan Bayar"]
+        TombolBayar --> PopupBayar["Popup: nominal + metode bayar"]
+
+        TabPOS --> POSCash["/pos/cash"]
+        POSCash --> RiwayatMasuk["Riwayat Transaksi Masuk"]
+        POSCash --> CatatanKeluar["Catatan Cash Keluar"]
+
+        TabAppt --> ApptQueue["/appointment/queue\n(tabel: jam × barber)"]
+        TabAppt --> ApptBooking["/appointment/booking"]
+        TabAppt --> ApptWalkin["/appointment/walk-in"]
+        TabAppt --> ApptCheckin["/appointment/checkin"]
+        TabAppt --> ApptHomeWed["/appointment/home-wedding\n(list: nama, alamat, jenis, waktu, barber)"]
+
+        TabAtt --> AttClockIn["/attendance/clock-in\n(PIN/Face)"]
+        TabAtt --> AttBreak["/attendance/break"]
+        TabAtt --> AttClockOut["/attendance/clock-out\n(PIN/Face)"]
+
+        TabInv --> InvView["/inventory\n(status: cukup/rendah/habis)"]
+        InvView --> InvOpname["Tombol Stock Opname\n(pojok kanan atas)"]
+
+        TabClose --> ClosingPage["/closing\n(reconciliation expected vs actual)"]
+    end
+
+    subgraph OpModuleBarber ["MODUL TERPADU: Operasional Cabang — akses Barber (2 tab saja)"]
+        direction TB
+        BTabAppt["Tab: Appointment & Queue\n(lihat jadwal sendiri)"]
+        BTabAtt["Tab: Attendance & Break"]
+    end
+
+    LauncherBM --> BMAccess
+
+    subgraph BMAccess ["Branch Manager/SPV — akses cabang sendiri"]
+        direction TB
+        BMOpModule["Akses PENUH ke Operasional Cabang\n(sama seperti Kasir: POS, Appointment,\nAttendance, Inventory, Closing)"]
+        BMApprove["Approve Refund/Void\n(dari transaksi Kasir cabangnya)"]
+        BMReview["Review Cashier Closing\n(cabang sendiri)"]
+        BMLeave["Approve Leave/Permission\n(karyawan cabang sendiri)"]
+    end
+
+    LauncherOwner --> OwnerAccess
+
+    subgraph OwnerAccess ["Owner/HQ — akses semua cabang + POV Manajemen"]
+        direction TB
+        OwnerOps["Operasional semua cabang\n(drill-down per cabang, POV Karyawan)"]
+        OwnerCRM["Customer, Membership & Loyalty"]
+        OwnerPIP["Product, Inventory & Purchasing"]
+        OwnerHR["Employee/HR"]
+        OwnerBranch["Branch Management"]
+        OwnerPromo["Promotion & Campaign"]
+        OwnerFinance["Finance, Dashboard & Analytics\n(per cabang DAN konsolidasi)"]
+        OwnerSettings["Settings"]
+    end
+
+    OwnerNoteRoute["⚠ Route detail POV Manajemen BELUM didesain\n— ini baru daftar modul, bukan sitemap final"]
+    OwnerAccess -.-> OwnerNoteRoute
+
+    style OpModule fill:#1A1A1C,stroke:#C1121F,color:#fff
+    style OpModuleBarber fill:#1A1A1C,stroke:#C1121F,color:#fff
+    style BMAccess fill:#1A1A1C,stroke:#D4A017,color:#fff
+    style OwnerAccess fill:#1A1A1C,stroke:#D4A017,color:#fff

@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0a0a;
+  --bg-raised: #141416;
+  --surface: #1a1a1c;
+  --surface-2: #232327;
+  --border-color: #2e2e32;
+  --red: #c1121f;
+  --red-bright: #e63946;
+  --gold: #d4a017;
+  --gold-bright: #f59e0b;
+  --text: #f3f1ec;
+  --text-muted: #b7b6bc;
+  --text-faint: #84838a;
+  --warn: #f59e0b;
+  --danger: #e63946;
+  --ok: #3fae6a;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border-color);
+  --color-red: var(--red);
+  --color-red-bright: var(--red-bright);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --font-display: var(--font-bebas-neue);
+  --font-accent: var(--font-playfair);
+  --font-body: var(--font-inter);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--red);
+  color: #fff;
+}
