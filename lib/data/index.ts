@@ -28,3 +28,4 @@ export * from './targets';
 export * from './executiveAnalytics';
 export * from './customerAnalytics';
 export * from './velocityAnalytics';
+export * from './barberAnalytics';

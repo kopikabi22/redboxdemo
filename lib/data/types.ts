@@ -929,3 +929,52 @@ export interface MenuEngineeringSummary {
   topCrossSells: CrossSellingInsight[];
 }
 
+export interface BarberProductivityMetric {
+  barberId: string;
+  barberName: string;
+  branchId: string;
+  branchName: string;
+  attendanceDays: number;
+  servicesCompleted: number;
+  servicesPerDay: number;
+  serviceRevenue: number;
+  productRevenue: number;
+  totalRevenue: number;
+  totalCommission: number;
+  occupiedMinutes: number;
+  utilizationRate: number; // %
+  rank: number;
+}
+
+export interface BranchSeatUtilization {
+  branchId: string;
+  branchName: string;
+  seatCapacity: number;
+  totalAvailableMinutes: number;
+  actualOccupiedMinutes: number;
+  utilizationRate: number; // %
+  status: 'optimal' | 'moderate' | 'underutilized';
+}
+
+export interface HeatmapCellData {
+  dayIndex: number; // 0: Senin .. 6: Minggu
+  dayName: string; // "Senin", "Selasa", ...
+  hour: number; // 9 .. 21
+  hourLabel: string; // "09:00", ...
+  transactionCount: number;
+  revenue: number;
+  intensityLevel: number; // 0 - 3
+}
+
+export interface BarberEfficiencySummary {
+  periodMonth: string;
+  totalBarbers: number;
+  topBarberName: string;
+  averageServicesPerDay: number;
+  averageBarberUtilization: number;
+  holdingSeatUtilization: number;
+  barbers: BarberProductivityMetric[];
+  branchSeats: BranchSeatUtilization[];
+  heatmap: HeatmapCellData[];
+}
+

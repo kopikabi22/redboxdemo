@@ -36,6 +36,7 @@ export const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "finance_expenses", label: "Beban Operasional", href: "/manajemen/finance/expenses" },
   { id: "finance_ap", label: "Hutang Dagang (AP)", href: "/manajemen/finance/ap" },
   { id: "targets", label: "Target & KPI Cabang", href: "/manajemen/targets" },
+  { id: "analytics_productivity", label: "Produktivitas & Okupansi", href: "/manajemen/analytics/productivity" },
   { id: "audit", label: "Audit Trail / Log", href: "/manajemen/audit" },
 ];
 
