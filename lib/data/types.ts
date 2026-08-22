@@ -143,3 +143,16 @@ export interface AttendanceRecord {
   clockOut: string | null;
   breaks: AttendanceBreak[];
 }
+
+/**
+ * A POS cart set aside mid-transaction to serve another customer, retrieved
+ * later. Unlike Transaction, this is a working draft — no totals, no
+ * payment — so it's fine for `customer` to still be unset.
+ */
+export interface HeldBill {
+  id: string;
+  branchId: string;
+  customer: TransactionCustomer | null;
+  items: TransactionLineItem[];
+  savedAt: string;
+}

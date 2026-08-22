@@ -17,6 +17,7 @@ export const StorageKeys = {
   transactions: `${STORAGE_PREFIX}transactions`,
   cashMoves: `${STORAGE_PREFIX}cash_moves`,
   attendance: `${STORAGE_PREFIX}attendance`,
+  heldBills: `${STORAGE_PREFIX}held_bills`,
   seeded: `${STORAGE_PREFIX}seeded_v1`,
 } as const;
 

@@ -8,3 +8,5 @@ export * from './customers';
 export * from './catalog';
 export * from './session';
 export * from './transactions';
+export * from './attendance';
+export * from './heldBills';
