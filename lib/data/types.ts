@@ -868,3 +868,64 @@ export interface CustomerIntelligenceSummary {
   segments: RFMSegmentSummary[];
 }
 
+export type ServiceQuadrant = 'stars' | 'workhorses' | 'puzzles' | 'dogs';
+export type ProductVelocityClassification =
+  | 'fast_moving'
+  | 'medium_moving'
+  | 'slow_moving'
+  | 'dead_stock';
+
+export interface ServiceVelocityMetric {
+  serviceId: string;
+  serviceName: string;
+  category: string;
+  price: number;
+  estimatedCost: number;
+  unitMargin: number;
+  marginPercentage: number;
+  quantitySold: number;
+  totalRevenue: number;
+  totalProfit: number;
+  quadrant: ServiceQuadrant;
+  quadrantLabel: string;
+  actionStrategy: string;
+}
+
+export interface ProductVelocityMetric {
+  productId: string;
+  sku: string;
+  productName: string;
+  category: string;
+  price: number;
+  cost: number;
+  marginPercentage: number;
+  quantitySold: number;
+  totalRevenue: number;
+  totalGrossProfit: number;
+  currentStock: number;
+  velocity: ProductVelocityClassification;
+  velocityLabel: string;
+  actionStrategy: string;
+}
+
+export interface CrossSellingInsight {
+  serviceName: string;
+  productName: string;
+  pairCount: number;
+  crossSellRate: number; // %
+}
+
+export interface MenuEngineeringSummary {
+  totalServicesAnalyzed: number;
+  totalProductsAnalyzed: number;
+  starsCount: number;
+  workhorsesCount: number;
+  puzzlesCount: number;
+  dogsCount: number;
+  fastMovingCount: number;
+  deadStockCount: number;
+  services: ServiceVelocityMetric[];
+  products: ProductVelocityMetric[];
+  topCrossSells: CrossSellingInsight[];
+}
+

@@ -17,6 +17,7 @@ export const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "branch", label: "Branch Management", href: "/manajemen/branch" },
   { id: "appointments", label: "Reservasi & Antrean", href: "/manajemen/appointments" },
   { id: "catalog", label: "Product & Service Master", href: "/manajemen/catalog" },
+  { id: "catalog_velocity", label: "Menu & Product Velocity", href: "/manajemen/catalog/velocity" },
   { id: "batches", label: "Batch & Kadaluarsa", href: "/manajemen/inventory/batches" },
   { id: "stock_opname", label: "Stock Opname", href: "/manajemen/inventory/opname" },
   { id: "stock_transfers", label: "Transfer Stok", href: "/manajemen/inventory/transfers" },
