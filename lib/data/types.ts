@@ -109,6 +109,9 @@ export interface TransactionLineItem {
   name: string;
   price: number;
   qty: number;
+  barberId?: string;
+  barberName?: string;
+  commissionPercent?: number;
   /**
    * Defaults to taxable when omitted — every ordinary service/product line
    * leaves this unset. Only the membership activation fee sets it to
@@ -543,6 +546,67 @@ export interface StockTransfer {
   receivedAt?: string;
   createdBy: string;
   createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AdvanceStatus = 'pending' | 'approved' | 'rejected' | 'deducted';
+
+export interface EmployeeAdvance {
+  id: string;
+  advanceNumber: string;
+  employeeId: string;
+  employeeName: string;
+  branchId: string;
+  branchName: string;
+  amount: number;
+  requestDate: string; // YYYY-MM-DD
+  reason: string;
+  status: AdvanceStatus;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  deductedPayrollId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PayrollStatus = 'draft' | 'approved' | 'paid' | 'cancelled';
+
+export interface PayrollRecord {
+  id: string;
+  payrollNumber: string;
+  employeeId: string;
+  employeeName: string;
+  employeeRole: string;
+  branchId: string;
+  branchName: string;
+  periodMonth: string; // "YYYY-MM"
+  attendanceDays: number;
+  totalServicesCompleted: number;
+  totalProductsSold: number;
+  baseSalary: number;
+  serviceCommission: number;
+  productCommission: number;
+  overtimeBonus: number;
+  allowances: number;
+  grossPay: number;
+  advanceDeduction: number;
+  lateDeduction: number;
+  otherDeductions: number;
+  totalDeductions: number;
+  takeHomePay: number;
+  status: PayrollStatus;
+  notes?: string;
+  cancellationReason?: string;
+  createdBy: string;
+  createdByName: string;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  paidBy?: string;
+  paidByName?: string;
+  paidAt?: string;
   createdAt: string;
   updatedAt: string;
 }

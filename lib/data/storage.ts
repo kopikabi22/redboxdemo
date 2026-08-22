@@ -31,6 +31,8 @@ export const StorageKeys = {
   purchaseOrders: `${STORAGE_PREFIX}purchase_orders`,
   stockOpnames: `${STORAGE_PREFIX}stock_opnames`,
   stockTransfers: `${STORAGE_PREFIX}stock_transfers`,
+  employeeAdvances: `${STORAGE_PREFIX}employee_advances`,
+  payrollRecords: `${STORAGE_PREFIX}payroll_records`,
   seeded: `${STORAGE_PREFIX}seeded_v1`,
 } as const;
 

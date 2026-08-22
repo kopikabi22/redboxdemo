@@ -27,6 +27,8 @@ const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "reminders", label: "Customer Reminder", href: "/manajemen/reminders" },
   { id: "employees", label: "Employee Master", href: "/manajemen/employees" },
   { id: "schedules", label: "Jadwal Kerja (Roster)", href: "/manajemen/schedules" },
+  { id: "payroll", label: "Payroll & Komisi", href: "/manajemen/hr/payroll" },
+  { id: "advances", label: "Kasbon Karyawan", href: "/manajemen/hr/advances" },
 ];
 
 interface ManajemenShellProps {
