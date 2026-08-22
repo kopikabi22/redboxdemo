@@ -22,6 +22,7 @@ export const StorageKeys = {
   loyaltyLedger: `${STORAGE_PREFIX}loyalty_ledger`,
   rewardCatalog: `${STORAGE_PREFIX}reward_catalog`,
   rewardRedemptions: `${STORAGE_PREFIX}reward_redemptions`,
+  promotions: `${STORAGE_PREFIX}promotions`,
   seeded: `${STORAGE_PREFIX}seeded_v1`,
 } as const;
 

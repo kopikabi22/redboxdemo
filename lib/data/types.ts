@@ -127,6 +127,44 @@ export interface TransactionCustomer {
   preferences?: CustomerPreferences;
 }
 
+export type PromoType = 'percentage' | 'flat';
+export type PromoScope = 'holding' | 'branch';
+
+export interface Promotion {
+  id: string;
+  code: string;
+  name: string;
+  type: PromoType;
+  /** Value percentage (e.g. 10 for 10%) or flat nominal in Rupiah (e.g. 20000 for Rp20.000). */
+  value: number;
+  /** Maximum discount in Rupiah for percentage promos, or null if no cap. */
+  maxDiscount: number | null;
+  /** Minimum subtotal required for promo to apply. Defaults to 0. */
+  minSpend: number;
+  scope: PromoScope;
+  /** branchId if scope === 'branch', or null if scope === 'holding' (applies company-wide). */
+  branchId: string | null;
+  /** Total maximum usage quota, or null if unlimited. */
+  usageLimit: number | null;
+  /** Number of times this promo has been successfully used. */
+  usedCount: number;
+  /** Start date in YYYY-MM-DD or ISO string, or null if no start limit. */
+  startDate: string | null;
+  /** End date in YYYY-MM-DD or ISO string, or null if no end limit. */
+  endDate: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface AppliedPromoInfo {
+  promoId: string;
+  code: string;
+  name: string;
+  type: PromoType;
+  value: number;
+  discountAmount: number;
+}
+
 export interface Transaction {
   id: string;
   branchId: string;
@@ -135,11 +173,13 @@ export interface Transaction {
   customer: TransactionCustomer;
   items: TransactionLineItem[];
   subtotal: number;
+  discount: number;
   tax: number;
   total: number;
   method: PaymentMethod;
   cashTendered: number;
   change: number;
+  appliedPromo?: AppliedPromoInfo | null;
   timestamp: string;
 }
 

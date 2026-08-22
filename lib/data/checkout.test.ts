@@ -3,6 +3,7 @@ import * as storage from './storage';
 import { StorageKeys, readCollection, writeCollection } from './storage';
 import { recordStockMove, getAvailableStock } from './stock';
 import { checkout, calculateCartTotals } from './transactions';
+import { createPromotion } from './promotions';
 import type {
   CashMove,
   Customer,
@@ -12,6 +13,8 @@ import type {
   Transaction,
   TransactionCustomer,
   TransactionLineItem,
+  Promotion,
+  Employee,
 } from './types';
 
 const BRANCH_ID = 'br_test';
@@ -59,6 +62,7 @@ function snapshotAllCollections() {
     cashMoves: readCollection<CashMove>(StorageKeys.cashMoves),
     loyaltyLedger: readCollection<LoyaltyLedgerEntry>(StorageKeys.loyaltyLedger),
     customers: readCollection<Customer>(StorageKeys.customers),
+    promotions: readCollection<Promotion>(StorageKeys.promotions),
   };
 }
 
@@ -425,3 +429,191 @@ describe('checkout — mid-way write failure in the loyalty-earning step', () =>
     }
   });
 });
+
+describe('checkout — promotions and discounts', () => {
+  const dummyOwner: Employee = {
+    id: 'emp_owner',
+    name: 'Owner',
+    role: 'Owner',
+    branchId: BRANCH_ID,
+    pin: '1234',
+  };
+
+  it('applies percentage promo code, calculates net tax, increments promo usage, and earns net loyalty points', () => {
+    createPromotion(
+      {
+        code: 'PROMO20',
+        name: 'Diskon 20%',
+        type: 'percentage',
+        value: 20,
+        scope: 'holding',
+      },
+      dummyOwner,
+    );
+
+    const items: TransactionLineItem[] = [
+      { kind: 'service', itemId: SERVICE_ID, name: 'Gentlemen Haircut', price: 100000, qty: 1 },
+    ];
+    // subtotal = 100000
+    // discount = 20000
+    // net taxable = 80000 -> tax (10%) = 8000
+    // total = 88000
+
+    const tx = checkout({
+      branchId: BRANCH_ID,
+      cashierId: 'emp_test',
+      cashierName: 'Kasir Satu',
+      customer: memberCustomer,
+      items,
+      method: 'Cash',
+      cashTendered: 100000,
+      promoCode: 'promo20',
+    });
+
+    expect(tx.subtotal).toBe(100000);
+    expect(tx.discount).toBe(20000);
+    expect(tx.tax).toBe(8000);
+    expect(tx.total).toBe(88000);
+    expect(tx.change).toBe(12000);
+    expect(tx.appliedPromo?.code).toBe('PROMO20');
+    expect(tx.appliedPromo?.discountAmount).toBe(20000);
+
+    // Check promo usage increment
+    const promoAfter = readCollection<Promotion>(StorageKeys.promotions).find((p) => p.code === 'PROMO20');
+    expect(promoAfter?.usedCount).toBe(1);
+
+    // Check loyalty points: net spend 80000 -> 8 points (not 10)
+    const ledger = readCollection<LoyaltyLedgerEntry>(StorageKeys.loyaltyLedger);
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0].points).toBe(8);
+  });
+
+  it('applies flat promo code correctly', () => {
+    createPromotion(
+      {
+        code: 'FLAT15K',
+        name: 'Potongan 15k',
+        type: 'flat',
+        value: 15000,
+        scope: 'holding',
+      },
+      dummyOwner,
+    );
+
+    const items: TransactionLineItem[] = [
+      { kind: 'service', itemId: SERVICE_ID, name: 'Service', price: 60000, qty: 1 },
+    ];
+    // subtotal = 60000
+    // discount = 15000
+    // net taxable = 45000 -> tax (10%) = 4500
+    // total = 49500
+
+    const tx = checkout({
+      branchId: BRANCH_ID,
+      cashierId: 'emp_test',
+      cashierName: 'Kasir Satu',
+      customer: memberCustomer,
+      items,
+      method: 'Cash',
+      cashTendered: 50000,
+      promoCode: 'FLAT15K',
+    });
+
+    expect(tx.subtotal).toBe(60000);
+    expect(tx.discount).toBe(15000);
+    expect(tx.tax).toBe(4500);
+    expect(tx.total).toBe(49500);
+    expect(tx.change).toBe(500);
+  });
+
+  it('rejects checkout when promo requirements are violated', () => {
+    createPromotion(
+      {
+        code: 'MIN100K',
+        name: 'Min 100k',
+        type: 'flat',
+        value: 10000,
+        minSpend: 100000,
+        scope: 'holding',
+      },
+      dummyOwner,
+    );
+
+    const items: TransactionLineItem[] = [
+      { kind: 'service', itemId: SERVICE_ID, name: 'Haircut', price: 60000, qty: 1 },
+    ];
+
+    expect(() =>
+      checkout({
+        branchId: BRANCH_ID,
+        cashierId: 'emp_test',
+        cashierName: 'Kasir',
+        customer: memberCustomer,
+        items,
+        method: 'Cash',
+        cashTendered: 100000,
+        promoCode: 'MIN100K',
+      }),
+    ).toThrow('Minimal belanja untuk promo');
+  });
+
+  it('rolls back promo usage and all other 6 collections when checkout fails mid-way', () => {
+    const promo = createPromotion(
+      {
+        code: 'ATOMICPROMO',
+        name: 'Atomic Promo',
+        type: 'flat',
+        value: 10000,
+        scope: 'holding',
+      },
+      dummyOwner,
+    );
+
+    const before = snapshotAllCollections();
+
+    // Mock loyalty ledger write failure
+    const failure = new Error('Disk full during loyalty write');
+    let loyaltyLedgerWriteAttempts = 0;
+    const realWriteCollection = storage.writeCollection;
+    const spy = vi.spyOn(storage, 'writeCollection').mockImplementation((key, value) => {
+      if (key === StorageKeys.loyaltyLedger) {
+        loyaltyLedgerWriteAttempts += 1;
+        if (loyaltyLedgerWriteAttempts === 1) {
+          throw failure;
+        }
+      }
+      return realWriteCollection(key, value);
+    });
+
+    try {
+      const items: TransactionLineItem[] = [
+        { kind: 'service', itemId: SERVICE_ID, name: 'Haircut', price: 60000, qty: 1 },
+      ];
+
+      expect(() =>
+        checkout({
+          branchId: BRANCH_ID,
+          cashierId: 'emp_test',
+          cashierName: 'Kasir',
+          customer: memberCustomer,
+          items,
+          method: 'Cash',
+          cashTendered: 100000,
+          promoCode: 'ATOMICPROMO',
+        }),
+      ).toThrowError(failure);
+
+      expect(loyaltyLedgerWriteAttempts).toBeGreaterThanOrEqual(1);
+
+      const after = snapshotAllCollections();
+      expect(after).toEqual(before);
+
+      // Verify promo usedCount did NOT increment
+      const promoAfter = readCollection<Promotion>(StorageKeys.promotions).find((p) => p.id === promo.id);
+      expect(promoAfter?.usedCount).toBe(0);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+

@@ -28,6 +28,7 @@ function makeTransaction(overrides: Partial<Transaction> & { method: PaymentMeth
     customer: guestCustomer,
     items: [],
     subtotal: overrides.total,
+    discount: 0,
     tax: 0,
     cashTendered: overrides.total,
     change: 0,

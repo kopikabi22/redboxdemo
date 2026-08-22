@@ -102,7 +102,8 @@ export function earnPointsForTransaction(transaction: Transaction): void {
   if (transaction.customer.type !== 'member' || transaction.customer.customerId === null) {
     return;
   }
-  const points = calculateEarnedPoints(transaction.subtotal);
+  const netSpend = Math.max(0, transaction.subtotal - (transaction.discount ?? 0));
+  const points = calculateEarnedPoints(netSpend);
   if (points <= 0) return;
 
   recordLoyaltyLedgerEntry({

@@ -1,6 +1,7 @@
 import { StorageKeys, readCollection, writeCollection, generateId, nowIso } from './storage';
 import { recordStockMove, getAvailableStock } from './stock';
 import { earnPointsForTransaction } from './membership';
+import { validateAndCalculatePromo, incrementPromoUsage } from './promotions';
 import type {
   CashMove,
   Customer,
@@ -11,15 +12,31 @@ import type {
   TransactionCustomer,
   TransactionLineItem,
   PaymentMethod,
+  AppliedPromoInfo,
+  Promotion,
 } from './types';
 
 const TAX_RATE = 0.1;
 
-export function calculateCartTotals(items: TransactionLineItem[]): { subtotal: number; tax: number; total: number } {
+export interface CartTotals {
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
+}
+
+export function calculateCartTotals(items: TransactionLineItem[], discountAmount = 0): CartTotals {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const taxableSubtotal = items.reduce((sum, item) => sum + (item.taxable === false ? 0 : item.price * item.qty), 0);
-  const tax = Math.round(taxableSubtotal * TAX_RATE);
-  return { subtotal, tax, total: subtotal + tax };
+
+  const discount = Math.min(Math.max(0, discountAmount), subtotal);
+  const taxableDiscount = Math.min(discount, taxableSubtotal);
+  const netTaxable = Math.max(0, taxableSubtotal - taxableDiscount);
+
+  const tax = Math.round(netTaxable * TAX_RATE);
+  const total = Math.max(0, subtotal - discount) + tax;
+
+  return { subtotal, discount, tax, total };
 }
 
 export interface CheckoutInput {
@@ -31,36 +48,30 @@ export interface CheckoutInput {
   method: PaymentMethod;
   /** Amount tendered for Cash payments; ignored (and forced to total) for every other method. */
   cashTendered: number;
+  /** Optional promo code to validate and apply at checkout. */
+  promoCode?: string | null;
+  /** Optional pre-validated promo info. */
+  appliedPromo?: AppliedPromoInfo | null;
 }
 
 /**
  * Finalizes a POS sale as one composite operation: writes the transaction,
  * deducts stock for product lines through the shared stock-movement ledger
  * function (never by touching InventoryBalance directly), logs the
- * matching cash-in movement for Cash payments, and — for member customers —
- * earns loyalty points through the shared, already-hardened
- * earnPointsForTransaction()/recordLoyaltyLedgerEntry() path.
+ * matching cash-in movement for Cash payments, increments promo usage count
+ * if a promo is applied, and — for member customers — earns loyalty points
+ * based on net spend through earnPointsForTransaction().
  *
  * Safety nets around that, all checked *before* anything is written:
  *  1. Stock is validated per distinct productId with quantities summed
- *     across every line item for that product first (a cart can legally
- *     have the same product split across two lines) — never validated
- *     line-by-line against the same available-stock figure, which would
- *     let two lines under-count a product that's over-sold in total.
- *  2. For Cash payments, cashTendered must cover the total — the data
- *     layer doesn't trust the UI to have already enforced this.
- *  3. The SIX collections it can touch (transactions, stockMoves,
- *     inventoryBalances, cashMoves, loyaltyLedger, customers) are
- *     snapshotted up front. If anything throws once writing has started
- *     (including a write itself failing, since storage.writeCollection no
- *     longer swallows errors), every one of those six collections is
- *     restored to its snapshot before the error is re-thrown — so a failed
- *     checkout never leaves a half-saved transaction, a stock deduction
- *     with no matching sale, a cash-in with no transaction, or points
- *     earned for a sale that didn't actually go through (or vice versa).
- *     earnPointsForTransaction() has its own inner snapshot/rollback too
- *     (via recordLoyaltyLedgerEntry) — the two layers are intentionally
- *     independent, same as the existing stock case.
+ *     across every line item for that product first.
+ *  2. Promo eligibility, date validity, branch scoping, min spend, and
+ *     remaining usage quota are verified before any mutations begin.
+ *  3. For Cash payments, cashTendered must cover the total.
+ *  4. The SEVEN collections it can touch (transactions, stockMoves,
+ *     inventoryBalances, cashMoves, loyaltyLedger, customers, promotions) are
+ *     snapshotted up front. If anything throws once writing has started,
+ *     every one of those seven collections is restored to its snapshot.
  */
 export function checkout(input: CheckoutInput): Transaction {
   const productItems = input.items.filter((item) => item.kind === 'product');
@@ -77,7 +88,20 @@ export function checkout(input: CheckoutInput): Transaction {
     }
   }
 
-  const { subtotal, tax, total } = calculateCartTotals(input.items);
+  let promoToApply: AppliedPromoInfo | null = null;
+  let discountAmount = 0;
+
+  if (input.promoCode) {
+    const calc = validateAndCalculatePromo(input.promoCode, input.branchId, input.items);
+    promoToApply = calc.appliedPromo;
+    discountAmount = calc.discountAmount;
+  } else if (input.appliedPromo) {
+    const calc = validateAndCalculatePromo(input.appliedPromo.code, input.branchId, input.items);
+    promoToApply = calc.appliedPromo;
+    discountAmount = calc.discountAmount;
+  }
+
+  const { subtotal, discount, tax, total } = calculateCartTotals(input.items, discountAmount);
 
   if (input.method === 'Cash' && input.cashTendered < total) {
     throw new Error(`Uang tunai diterima (${input.cashTendered}) kurang dari total tagihan (${total}).`);
@@ -91,23 +115,24 @@ export function checkout(input: CheckoutInput): Transaction {
     customer: input.customer,
     items: input.items,
     subtotal,
+    discount,
     tax,
     total,
     method: input.method,
     cashTendered: input.method === 'Cash' ? input.cashTendered : total,
     change: input.method === 'Cash' ? input.cashTendered - total : 0,
+    appliedPromo: promoToApply,
     timestamp: nowIso(),
   };
 
-  // Deep-copy snapshots (structuredClone, not the same array instances that
-  // readCollection() happens to return) so mutating them via push() below
-  // can never accidentally corrupt the values we'd restore on failure.
+  // Deep-copy snapshots across all 7 collections
   const transactionsSnapshot = structuredClone(readCollection<Transaction>(StorageKeys.transactions));
   const stockMovesSnapshot = structuredClone(readCollection<StockMove>(StorageKeys.stockMoves));
   const inventoryBalancesSnapshot = structuredClone(readCollection<InventoryBalance>(StorageKeys.inventoryBalances));
   const cashMovesSnapshot = structuredClone(readCollection<CashMove>(StorageKeys.cashMoves));
   const loyaltyLedgerSnapshot = structuredClone(readCollection<LoyaltyLedgerEntry>(StorageKeys.loyaltyLedger));
   const customersSnapshot = structuredClone(readCollection<Customer>(StorageKeys.customers));
+  const promotionsSnapshot = structuredClone(readCollection<Promotion>(StorageKeys.promotions));
 
   try {
     const transactions = readCollection<Transaction>(StorageKeys.transactions);
@@ -140,6 +165,10 @@ export function checkout(input: CheckoutInput): Transaction {
       writeCollection(StorageKeys.cashMoves, cashMoves);
     }
 
+    if (promoToApply) {
+      incrementPromoUsage(promoToApply.promoId);
+    }
+
     earnPointsForTransaction(transaction);
 
     return transaction;
@@ -150,6 +179,7 @@ export function checkout(input: CheckoutInput): Transaction {
     writeCollection(StorageKeys.cashMoves, cashMovesSnapshot);
     writeCollection(StorageKeys.loyaltyLedger, loyaltyLedgerSnapshot);
     writeCollection(StorageKeys.customers, customersSnapshot);
+    writeCollection(StorageKeys.promotions, promotionsSnapshot);
     throw err;
   }
 }

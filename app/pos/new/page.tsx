@@ -21,8 +21,9 @@ import {
   MEMBERSHIP_ACTIVATION_SERVICE_ID,
   getMembershipActivationFee,
   getEmployeeById,
+  validateAndCalculatePromo,
 } from "@/lib/data";
-import type { Service, Product, TransactionCustomer, TransactionLineItem, Transaction } from "@/lib/data";
+import type { Service, Product, TransactionCustomer, TransactionLineItem, Transaction, AppliedPromoInfo } from "@/lib/data";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { AppShell, getNavItemsForRole } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
@@ -57,6 +58,9 @@ export default function PosNewPage() {
   const [stockVersion, setStockVersion] = useState(0);
   const [heldBillsVersion, setHeldBillsVersion] = useState(0);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromoInfo | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
   const [registrationDraft, setRegistrationDraft] = useState<{ name: string; phone: string; referrerId: string | null } | null>(null);
   const [activationFollowUp, setActivationFollowUp] = useState<{ transactionId: string; message: string; name: string; phone: string } | null>(
     null,
@@ -133,7 +137,49 @@ export default function PosNewPage() {
     setItems((prev) => (nextQty <= 0 ? prev.filter((_, i) => i !== index) : prev.map((it, i) => (i === index ? { ...it, qty: nextQty } : it))));
   }
 
-  const totals = useMemo(() => calculateCartTotals(items), [items]);
+  function handleApplyPromo() {
+    setPromoError(null);
+    const code = promoInput.trim().toUpperCase();
+    if (!code) {
+      setPromoError("Masukkan kode promo.");
+      return;
+    }
+    if (!employee) return;
+    if (items.length === 0) {
+      setPromoError("Tambahkan item ke keranjang terlebih dahulu.");
+      return;
+    }
+    try {
+      const calc = validateAndCalculatePromo(code, employee.branchId, items);
+      setAppliedPromo(calc.appliedPromo);
+      setPromoInput("");
+      setPromoError(null);
+    } catch (err) {
+      setPromoError(err instanceof Error ? err.message : "Kode promo tidak valid.");
+    }
+  }
+
+  function handleRemovePromo() {
+    setAppliedPromo(null);
+    setPromoError(null);
+    setPromoInput("");
+  }
+
+  const totals = useMemo(() => {
+    if (!appliedPromo) {
+      return calculateCartTotals(items);
+    }
+    if (employee) {
+      try {
+        const calc = validateAndCalculatePromo(appliedPromo.code, employee.branchId, items);
+        return calculateCartTotals(items, calc.discountAmount);
+      } catch {
+        return calculateCartTotals(items, 0);
+      }
+    }
+    return calculateCartTotals(items, appliedPromo.discountAmount);
+  }, [items, appliedPromo, employee]);
+
   const canCheckout = items.length > 0 && customer !== null;
 
   function handleLogout() {
@@ -148,6 +194,9 @@ export default function PosNewPage() {
       holdBill({ branchId: employee.branchId, customer, items });
       setItems([]);
       setCustomer(null);
+      setAppliedPromo(null);
+      setPromoInput("");
+      setPromoError(null);
       setHeldBillsVersion((v) => v + 1);
       setTab("held");
     } catch (err) {
@@ -369,11 +418,73 @@ export default function PosNewPage() {
             )}
           </div>
 
+          {/* Kupon & Promosi */}
+          <div className="my-2.5 border-t border-border pt-2.5">
+            <div className="mb-1.5 text-xs font-semibold text-text-muted">Kupon & Promosi</div>
+            {appliedPromo && totals.discount > 0 ? (
+              <div className="flex items-center justify-between rounded-md border border-gold-bright/40 bg-gold-bright/10 p-2 text-xs">
+                <div>
+                  <div className="font-bold text-gold-bright">
+                    🏷️ {appliedPromo.code} · {appliedPromo.name}
+                  </div>
+                  <div className="text-[11px] text-text-muted">
+                    Potongan: {formatRupiah(totals.discount)} ({appliedPromo.type === "percentage" ? `${appliedPromo.value}%` : "Flat"})
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemovePromo}
+                  className="h-6 w-6 rounded border border-border bg-surface text-xs font-bold text-text-faint hover:border-danger hover:text-danger"
+                  title="Hapus Promo"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    placeholder="Kode Promo (misal: MERDEKA20)"
+                    value={promoInput}
+                    onChange={(event) => {
+                      setPromoInput(event.target.value.toUpperCase());
+                      setPromoError(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        handleApplyPromo();
+                      }
+                    }}
+                    disabled={items.length === 0}
+                    className="flex-1 rounded-md border border-border bg-surface-2 px-2.5 py-1.5 font-mono text-xs uppercase text-text placeholder:font-sans placeholder:normal-case placeholder:text-text-faint focus:border-gold-bright focus:outline-none disabled:opacity-50"
+                  />
+                  <Button
+                    variant="default"
+                    className="px-3 py-1.5 text-xs font-bold"
+                    disabled={items.length === 0 || !promoInput.trim()}
+                    onClick={handleApplyPromo}
+                  >
+                    Terapkan
+                  </Button>
+                </div>
+                {promoError && <div className="text-[11px] text-danger">{promoError}</div>}
+              </div>
+            )}
+          </div>
+
           <div className="space-y-1 text-[12.5px]">
             <div className="flex justify-between">
               <span className="text-text-muted">Subtotal</span>
               <span className="font-bold">{formatRupiah(totals.subtotal)}</span>
             </div>
+            {totals.discount > 0 && (
+              <div className="flex justify-between text-gold-bright">
+                <span>Diskon</span>
+                <span className="font-bold">- {formatRupiah(totals.discount)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-text-muted">Pajak (10%)</span>
               <span className="font-bold">{formatRupiah(totals.tax)}</span>
@@ -474,11 +585,15 @@ export default function PosNewPage() {
             items,
             method,
             cashTendered,
+            appliedPromo: totals.discount > 0 ? appliedPromo : null,
           });
           setReceipt(transaction);
           setPaymentModalOpen(false);
           setItems([]);
           setCustomer(null);
+          setAppliedPromo(null);
+          setPromoInput("");
+          setPromoError(null);
           setStockVersion((v) => v + 1);
         }}
       />
@@ -497,8 +612,22 @@ export default function PosNewPage() {
         {receipt && (
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between">
+              <span className="text-text-muted">Subtotal</span>
+              <span>{formatRupiah(receipt.subtotal)}</span>
+            </div>
+            {receipt.discount > 0 && (
+              <div className="flex justify-between text-gold-bright">
+                <span>Diskon ({receipt.appliedPromo?.code ?? "Promo"})</span>
+                <span>- {formatRupiah(receipt.discount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-text-muted">Pajak (10%)</span>
+              <span>{formatRupiah(receipt.tax)}</span>
+            </div>
+            <div className="flex justify-between border-t border-border pt-1.5 font-bold">
               <span>Total</span>
-              <span className="font-bold text-gold-bright">{formatRupiah(receipt.total)}</span>
+              <span className="text-gold-bright">{formatRupiah(receipt.total)}</span>
             </div>
             {receipt.method === "Cash" && (
               <div className="flex justify-between">
@@ -507,7 +636,7 @@ export default function PosNewPage() {
               </div>
             )}
             <div className="flex justify-between">
-              <span>Metode</span>
+              <span className="text-text-muted">Metode</span>
               <span>{receipt.method}</span>
             </div>
           </div>

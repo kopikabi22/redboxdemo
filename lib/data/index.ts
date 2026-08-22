@@ -14,3 +14,4 @@ export * from './heldBills';
 export * from './closing';
 export * from './membership';
 export * from './membershipActivation';
+export * from './promotions';
