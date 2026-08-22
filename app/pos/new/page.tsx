@@ -20,6 +20,7 @@ import {
   MembershipActivationError,
   MEMBERSHIP_ACTIVATION_SERVICE_ID,
   getMembershipActivationFee,
+  getEmployeeById,
 } from "@/lib/data";
 import type { Service, Product, TransactionCustomer, TransactionLineItem, Transaction } from "@/lib/data";
 import { useIsClient } from "@/lib/hooks/useIsClient";
@@ -290,7 +291,7 @@ export default function PosNewPage() {
           <button
             type="button"
             onClick={() => setCustomerModalOpen(true)}
-            className="my-3 w-full rounded-md border border-border bg-surface-2 px-3 py-2.5 text-left"
+            className="my-3 w-full rounded-md border border-border bg-surface-2 px-3 py-2.5 text-left transition-colors hover:border-gold-bright/50"
           >
             <div className="mb-0.5 text-xs text-text-faint">Konsumen</div>
             <div className="text-sm font-bold">
@@ -300,6 +301,37 @@ export default function PosNewPage() {
                   : `Guest · ${customer.phone}`
                 : "Ketuk untuk pilih (Member / Guest)"}
             </div>
+            {customer && customer.type === "member" && customer.preferences && (
+              (customer.preferences.preferredStyle ||
+                customer.preferences.preferredBarberId ||
+                customer.preferences.preferredProduct ||
+                customer.preferences.notes) ? (
+                <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2 text-xs">
+                  <div className="flex flex-wrap gap-1">
+                    {customer.preferences.preferredStyle && (
+                      <span className="rounded bg-gold-bright/15 px-1.5 py-0.5 text-[11px] font-semibold text-gold-bright">
+                        ✂️ {customer.preferences.preferredStyle}
+                      </span>
+                    )}
+                    {customer.preferences.preferredBarberId && (
+                      <span className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-muted">
+                        💈 {getEmployeeById(customer.preferences.preferredBarberId)?.name ?? "Barber Langganan"}
+                      </span>
+                    )}
+                    {customer.preferences.preferredProduct && (
+                      <span className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-text-muted">
+                        🧴 {customer.preferences.preferredProduct}
+                      </span>
+                    )}
+                  </div>
+                  {customer.preferences.notes && (
+                    <div className="rounded border border-border/40 bg-surface/80 p-1.5 text-[11.5px] italic text-text-muted">
+                      📝 {customer.preferences.notes}
+                    </div>
+                  )}
+                </div>
+              ) : null
+            )}
           </button>
 
           <div className="mb-2.5 max-h-64 overflow-y-auto">
@@ -402,6 +434,7 @@ export default function PosNewPage() {
               name: result.customer.name,
               phone: result.customer.phone,
               tier: result.customer.tier,
+              preferences: result.customer.preferences,
             });
             setRegistrationDraft(null);
             setInfoMessage(`Member baru terdaftar: ${result.customer.name}.`);

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { searchMemberCustomers, getMembershipActivationFee, formatRupiah } from "@/lib/data";
+import { searchMemberCustomers, getMembershipActivationFee, formatRupiah, getEmployeeById } from "@/lib/data";
 import type { TransactionCustomer } from "@/lib/data";
 
 interface CustomerPickerModalProps {
@@ -136,30 +136,58 @@ export function CustomerPickerModal({ open, onClose, onSelect, onStartRegistrati
           {results.length === 0 ? (
             <div className="py-2.5 text-sm text-text-faint">Tidak ditemukan.</div>
           ) : (
-            results.map((customer) => (
-              <button
-                key={customer.id}
-                type="button"
-                onClick={() =>
-                  onSelect({
-                    type: "member",
-                    customerId: customer.id,
-                    name: customer.name,
-                    phone: customer.phone,
-                    tier: customer.tier,
-                  })
-                }
-                className="flex w-full items-center justify-between border-b border-border py-2.5 text-left last:border-b-0"
-              >
-                <div>
-                  <div className="text-[12.5px] font-semibold">{customer.name}</div>
-                  <div className="text-xs text-text-faint">{customer.phone}</div>
-                </div>
-                <span className="rounded-full bg-gold-bright/20 px-2.5 py-0.5 text-[11px] font-bold text-gold-bright">
-                  {customer.tier} · {customer.points} pts
-                </span>
-              </button>
-            ))
+            results.map((customer) => {
+              const pref = customer.preferences;
+              const barberName = pref?.preferredBarberId ? getEmployeeById(pref.preferredBarberId)?.name : null;
+              const hasPref = pref && (pref.preferredStyle || barberName || pref.preferredProduct || pref.notes);
+
+              return (
+                <button
+                  key={customer.id}
+                  type="button"
+                  onClick={() =>
+                    onSelect({
+                      type: "member",
+                      customerId: customer.id,
+                      name: customer.name,
+                      phone: customer.phone,
+                      tier: customer.tier,
+                      preferences: customer.preferences,
+                    })
+                  }
+                  className="flex w-full flex-col border-b border-border py-2.5 text-left last:border-b-0 hover:bg-surface-2/40 px-1 rounded transition-colors"
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <div>
+                      <div className="text-[12.5px] font-semibold">{customer.name}</div>
+                      <div className="text-xs text-text-faint">{customer.phone}</div>
+                    </div>
+                    <span className="rounded-full bg-gold-bright/20 px-2.5 py-0.5 text-[11px] font-bold text-gold-bright">
+                      {customer.tier} · {customer.points} pts
+                    </span>
+                  </div>
+                  {hasPref && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      {pref?.preferredStyle && (
+                        <span className="rounded bg-gold-bright/15 px-1.5 py-0.5 font-medium text-gold-bright">
+                          ✂️ {pref.preferredStyle}
+                        </span>
+                      )}
+                      {barberName && (
+                        <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-text-muted">
+                          💈 {barberName}
+                        </span>
+                      )}
+                      {pref?.notes && (
+                        <span className="truncate max-w-[220px] italic text-text-faint" title={pref.notes}>
+                          📝 {pref.notes}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })
           )}
         </div>
       )}

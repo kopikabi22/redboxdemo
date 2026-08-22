@@ -27,6 +27,24 @@ export interface Employee {
 export type CustomerType = 'member' | 'guest';
 export type MembershipTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
 
+export interface CustomerPreferences {
+  /** ID Barber favorit/langganan (Employee dengan role 'Barber'), null jika belum ada. */
+  preferredBarberId: string | null;
+  /** Gaya potongan rambut favorit/langganan konsumen. */
+  preferredStyle: string;
+  /** Preferensi produk styling/grooming konsumen. */
+  preferredProduct: string;
+  /** Catatan servis spesifik atau instruksi khusus dari barber/konsumen. */
+  notes: string;
+}
+
+export const DEFAULT_CUSTOMER_PREFERENCES: CustomerPreferences = {
+  preferredBarberId: null,
+  preferredStyle: '',
+  preferredProduct: '',
+  notes: '',
+};
+
 export interface Customer {
   id: string;
   name: string;
@@ -36,6 +54,7 @@ export interface Customer {
   tier: MembershipTier | null;
   points: number;
   createdAt: string;
+  preferences?: CustomerPreferences;
 }
 
 export interface Service {
@@ -105,6 +124,7 @@ export interface TransactionCustomer {
   name: string;
   phone: string;
   tier: MembershipTier | null;
+  preferences?: CustomerPreferences;
 }
 
 export interface Transaction {

@@ -7,11 +7,12 @@ import {
   clearSession,
   getBranches,
   getCustomers,
+  getEmployees,
   createCustomer,
   updateCustomer,
   deleteCustomer,
 } from "@/lib/data";
-import type { Customer, CustomerType, MembershipTier } from "@/lib/data";
+import type { Customer, CustomerType, MembershipTier, CreateCustomerInput } from "@/lib/data";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
 import { ManajemenShell } from "@/components/layout/ManajemenShell";
@@ -28,14 +29,31 @@ interface CustomerFormState {
   type: CustomerType;
   tier: MembershipTier;
   points: string;
+  preferredBarberId: string;
+  preferredStyle: string;
+  preferredProduct: string;
+  notes: string;
 }
-const EMPTY_FORM: CustomerFormState = { id: null, name: "", phone: "", type: "member", tier: "Bronze", points: "0" };
+
+const EMPTY_FORM: CustomerFormState = {
+  id: null,
+  name: "",
+  phone: "",
+  type: "member",
+  tier: "Bronze",
+  points: "0",
+  preferredBarberId: "",
+  preferredStyle: "",
+  preferredProduct: "",
+  notes: "",
+};
 
 export default function CustomerDatabasePage() {
   const router = useRouter();
   const isClient = useIsClient();
   const session = isClient ? getSessionEmployee("manajemen") : null;
   const branches = isClient ? getBranches() : [];
+  const barbers = isClient ? getEmployees().filter((e) => e.role === "Barber") : [];
   const { selectedBranchId, setSelectedBranchId } = useSelectedBranchId(session, branches);
 
   const [dataVersion, setDataVersion] = useState(0);
@@ -65,12 +83,18 @@ export default function CustomerDatabasePage() {
     if (!form) return;
     setFormError(null);
     try {
-      const payload = {
+      const payload: CreateCustomerInput = {
         name: form.name,
         phone: form.phone,
         type: form.type,
         tier: form.type === "member" ? form.tier : null,
         points: Number(form.points || 0),
+        preferences: {
+          preferredBarberId: form.preferredBarberId.trim() || null,
+          preferredStyle: form.preferredStyle,
+          preferredProduct: form.preferredProduct,
+          notes: form.notes,
+        },
       };
       if (form.id) updateCustomer(form.id, payload);
       else createCustomer(payload);
@@ -94,8 +118,7 @@ export default function CustomerDatabasePage() {
       <div className="font-accent mb-1 text-xs italic text-gold-bright">Customer Database (Dasar)</div>
       <div className="mb-1 font-display text-3xl tracking-wide">Customer Database</div>
       <div className="mb-4 max-w-xl text-sm text-text-muted">
-        Satu tabel customer dipakai lintas POV (Quick-Lookup di POS memakai data yang sama). Segmentasi, RFM, dan loyalty
-        engine lengkap tersedia di Tier 2.
+        Satu tabel customer dipakai lintas POV (Quick-Lookup di POS memakai data yang sama). Segmentasi, RFM, dan preferensi servis tersimpan terpusat.
       </div>
 
       <div className="mb-3.5 flex justify-end">
@@ -113,42 +136,83 @@ export default function CustomerDatabasePage() {
               <th className="px-3 py-2 font-normal">Tipe</th>
               <th className="px-3 py-2 font-normal">Tier</th>
               <th className="px-3 py-2 font-normal">Poin</th>
+              <th className="px-3 py-2 font-normal">Preferensi & Catatan</th>
               <th className="px-3 py-2 font-normal" />
             </tr>
           </thead>
           <tbody>
-            {customers.map((customer) => (
-              <tr key={customer.id} className="border-b border-border last:border-b-0">
-                <td className="px-3 py-2 font-semibold">{customer.name}</td>
-                <td className="px-3 py-2">{customer.phone}</td>
-                <td className="px-3 py-2">{customer.type === "member" ? "Member" : "Guest"}</td>
-                <td className="px-3 py-2">{customer.type === "member" ? customer.tier : "-"}</td>
-                <td className="px-3 py-2">{customer.points}</td>
-                <td className="px-3 py-2">
-                  <div className="flex justify-end gap-1.5">
-                    <Button
-                      variant="default"
-                      className="px-2.5 py-1.5 text-xs"
-                      onClick={() =>
-                        setForm({
-                          id: customer.id,
-                          name: customer.name,
-                          phone: customer.phone,
-                          type: customer.type,
-                          tier: customer.tier ?? "Bronze",
-                          points: String(customer.points),
-                        })
-                      }
-                    >
-                      Ubah
-                    </Button>
-                    <Button variant="danger" className="px-2.5 py-1.5 text-xs" onClick={() => setDeleteTarget(customer)}>
-                      Hapus
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {customers.map((customer) => {
+              const pref = customer.preferences;
+              const barber = pref?.preferredBarberId ? barbers.find((b) => b.id === pref.preferredBarberId) : null;
+              const hasPref = pref && (pref.preferredStyle || pref.preferredBarberId || pref.preferredProduct || pref.notes);
+
+              return (
+                <tr key={customer.id} className="border-b border-border last:border-b-0">
+                  <td className="px-3 py-2 font-semibold">{customer.name}</td>
+                  <td className="px-3 py-2">{customer.phone}</td>
+                  <td className="px-3 py-2">{customer.type === "member" ? "Member" : "Guest"}</td>
+                  <td className="px-3 py-2">{customer.type === "member" ? customer.tier : "-"}</td>
+                  <td className="px-3 py-2">{customer.points}</td>
+                  <td className="px-3 py-2 text-xs">
+                    {hasPref ? (
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap gap-1">
+                          {pref?.preferredStyle && (
+                            <span className="rounded bg-gold-bright/15 px-1.5 py-0.5 text-[11px] font-semibold text-gold-bright">
+                              ✂️ {pref.preferredStyle}
+                            </span>
+                          )}
+                          {barber && (
+                            <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[11px] text-text-muted">
+                              💈 {barber.name}
+                            </span>
+                          )}
+                          {pref?.preferredProduct && (
+                            <span className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[11px] text-text-muted">
+                              🧴 {pref.preferredProduct}
+                            </span>
+                          )}
+                        </div>
+                        {pref?.notes && (
+                          <div className="italic text-text-faint text-[11.5px] max-w-xs truncate" title={pref.notes}>
+                            📝 {pref.notes}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-text-faint">-</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex justify-end gap-1.5">
+                      <Button
+                        variant="default"
+                        className="px-2.5 py-1.5 text-xs"
+                        onClick={() =>
+                          setForm({
+                            id: customer.id,
+                            name: customer.name,
+                            phone: customer.phone,
+                            type: customer.type,
+                            tier: customer.tier ?? "Bronze",
+                            points: String(customer.points),
+                            preferredBarberId: customer.preferences?.preferredBarberId ?? "",
+                            preferredStyle: customer.preferences?.preferredStyle ?? "",
+                            preferredProduct: customer.preferences?.preferredProduct ?? "",
+                            notes: customer.preferences?.notes ?? "",
+                          })
+                        }
+                      >
+                        Ubah
+                      </Button>
+                      <Button variant="danger" className="px-2.5 py-1.5 text-xs" onClick={() => setDeleteTarget(customer)}>
+                        Hapus
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -227,6 +291,62 @@ export default function CustomerDatabasePage() {
                 className="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-text focus:border-gold-bright focus:outline-none"
               />
             </div>
+
+            <div className="border-t border-border pt-3">
+              <div className="font-accent mb-2.5 text-xs italic text-gold-bright">Preferensi & Catatan Servis</div>
+              
+              <div className="space-y-2.5">
+                <div>
+                  <div className="mb-1 text-[11.5px] uppercase tracking-wide text-text-faint">Barber Favorit / Langganan</div>
+                  <select
+                    value={form.preferredBarberId}
+                    onChange={(event) => setForm({ ...form, preferredBarberId: event.target.value })}
+                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text focus:border-gold-bright focus:outline-none"
+                  >
+                    <option value="">-- Tanpa Barber Khusus --</option>
+                    {barbers.map((barber) => (
+                      <option key={barber.id} value={barber.id}>
+                        {barber.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <div className="mb-1 text-[11.5px] uppercase tracking-wide text-text-faint">Gaya Potongan Rambut</div>
+                  <input
+                    type="text"
+                    placeholder="Misal: Side Part Fade, French Crop, Undercut..."
+                    value={form.preferredStyle}
+                    onChange={(event) => setForm({ ...form, preferredStyle: event.target.value })}
+                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text focus:border-gold-bright focus:outline-none placeholder:text-text-faint"
+                  />
+                </div>
+
+                <div>
+                  <div className="mb-1 text-[11.5px] uppercase tracking-wide text-text-faint">Preferensi Produk Styling / Grooming</div>
+                  <input
+                    type="text"
+                    placeholder="Misal: Matte Pomade, Water-based, Beard Oil..."
+                    value={form.preferredProduct}
+                    onChange={(event) => setForm({ ...form, preferredProduct: event.target.value })}
+                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text focus:border-gold-bright focus:outline-none placeholder:text-text-faint"
+                  />
+                </div>
+
+                <div>
+                  <div className="mb-1 text-[11.5px] uppercase tracking-wide text-text-faint">Catatan Servis / Alergi / Instruksi Khusus</div>
+                  <textarea
+                    rows={2}
+                    placeholder="Catatan sensitivitas kulit, arah pusar rambut, permintaan khusus..."
+                    value={form.notes}
+                    onChange={(event) => setForm({ ...form, notes: event.target.value })}
+                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text focus:border-gold-bright focus:outline-none placeholder:text-text-faint resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
             {formError && <div className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">{formError}</div>}
           </div>
         )}
