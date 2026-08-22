@@ -294,3 +294,48 @@ export interface RewardRedemption {
   decidedAt: string | null;
   decidedBy: string | null;
 }
+
+export type AppointmentType = 'regular' | 'walk_in' | 'home_service' | 'wedding';
+export type AppointmentStatus = 'booked' | 'checked_in' | 'in_service' | 'completed' | 'paid' | 'no_show' | 'cancelled';
+export type HomeServicePackage = 'single' | 'family';
+export type WeddingPackage = 'gentleman' | 'silver' | 'gold' | 'platinum';
+
+export const HOME_SERVICE_PRICING = {
+  single: 250000, // per orang, 1 pax
+  family: 200000, // per orang, minimal 2 pax
+} as const;
+
+export const WEDDING_GROOMING_PRICING = {
+  gentleman: 350000, // 1 orang
+  silver: 500000, // 2 orang
+  gold: 750000, // 3 orang
+  platinum: 1000000, // 4 orang
+} as const;
+
+export interface Appointment {
+  id: string;
+  branchId: string;
+  customer: TransactionCustomer;
+  barberId: string;
+  barberName: string;
+  type: AppointmentType;
+  serviceId?: string | null;
+  serviceName?: string | null;
+  packageType?: HomeServicePackage | WeddingPackage | null;
+  paxCount: number;
+  price: number;
+  address?: string | null;
+  distanceKm?: number | null;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  durationMinutes: number;
+  queueNumber?: number | null;
+  status: AppointmentStatus;
+  notes?: string;
+  noShowReason?: string | null;
+  transactionId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+

@@ -22,8 +22,18 @@ import {
   getMembershipActivationFee,
   getEmployeeById,
   validateAndCalculatePromo,
+  getCompletedUnpaidAppointments,
+  markAppointmentPaid,
 } from "@/lib/data";
-import type { Service, Product, TransactionCustomer, TransactionLineItem, Transaction, AppliedPromoInfo } from "@/lib/data";
+import type {
+  Service,
+  Product,
+  TransactionCustomer,
+  TransactionLineItem,
+  Transaction,
+  AppliedPromoInfo,
+  Appointment,
+} from "@/lib/data";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { AppShell, getNavItemsForRole } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
@@ -61,6 +71,9 @@ export default function PosNewPage() {
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromoInfo | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [activeAppointmentId, setActiveAppointmentId] = useState<string | null>(null);
+  const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
+  const [appointmentVersion, setAppointmentVersion] = useState(0);
   const [registrationDraft, setRegistrationDraft] = useState<{ name: string; phone: string; referrerId: string | null } | null>(null);
   const [activationFollowUp, setActivationFollowUp] = useState<{ transactionId: string; message: string; name: string; phone: string } | null>(
     null,
@@ -197,11 +210,43 @@ export default function PosNewPage() {
       setAppliedPromo(null);
       setPromoInput("");
       setPromoError(null);
+      setActiveAppointmentId(null);
       setHeldBillsVersion((v) => v + 1);
       setTab("held");
     } catch (err) {
       setCartError(err instanceof Error ? err.message : "Gagal menyimpan bill.");
     }
+  }
+
+  function handleLoadAppointment(appt: Appointment) {
+    setCustomer(appt.customer);
+    setActiveAppointmentId(appt.id);
+    setCartError(null);
+
+    if (appt.serviceId) {
+      setItems([
+        {
+          kind: "service",
+          itemId: appt.serviceId,
+          name: appt.serviceName ?? "Layanan Pangkas",
+          price: appt.price,
+          qty: 1,
+        },
+      ]);
+    } else {
+      setItems([
+        {
+          kind: "service",
+          itemId: `pkg_${appt.type}_${appt.packageType ?? "custom"}`,
+          name: appt.serviceName ?? "Paket Layanan",
+          price: appt.price,
+          qty: 1,
+        },
+      ]);
+    }
+
+    setAppointmentModalOpen(false);
+    setInfoMessage(`Antrean #${appt.queueNumber ?? "—"} (${appt.customer.name}) berhasil dimuat ke keranjang.`);
   }
 
   /**
@@ -219,6 +264,7 @@ export default function PosNewPage() {
     const bill = retrieveHeldBill(billId, employee.branchId);
     setCustomer(bill.customer);
     setItems(bill.items);
+    setActiveAppointmentId(null);
     setCartError(null);
     setHeldBillsVersion((v) => v + 1);
     setTab("service");
@@ -233,7 +279,9 @@ export default function PosNewPage() {
   }
 
   void heldBillsVersion;
+  void appointmentVersion;
   const heldBills = getHeldBills(employee.branchId);
+  const completedAppointments = getCompletedUnpaidAppointments(employee.branchId);
 
   return (
     <AppShell
@@ -246,6 +294,24 @@ export default function PosNewPage() {
     >
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px]">
         <div>
+          {completedAppointments.length > 0 && (
+            <div className="mb-3.5 flex items-center justify-between rounded-lg border border-gold-bright/40 bg-gold-bright/10 px-3.5 py-2.5 text-xs text-gold-bright">
+              <div className="flex items-center gap-2">
+                <span className="text-base">💈</span>
+                <span>
+                  Terdapat <strong>{completedAppointments.length} antrean selesai</strong> siap dibayar.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAppointmentModalOpen(true)}
+                className="rounded border border-gold-bright bg-surface px-2.5 py-1 text-xs font-bold text-gold-bright hover:bg-gold-bright hover:text-bg"
+              >
+                Tarik Antrean ({completedAppointments.length})
+              </button>
+            </div>
+          )}
+
           <div className="mb-3.5 flex gap-2">
             <button type="button" onClick={() => setTab("service")} className={tabButtonClass(tab === "service")}>
               Service
@@ -587,6 +653,13 @@ export default function PosNewPage() {
             cashTendered,
             appliedPromo: totals.discount > 0 ? appliedPromo : null,
           });
+          if (activeAppointmentId) {
+            try {
+              markAppointmentPaid(activeAppointmentId, transaction.id);
+            } catch (err) {
+              console.error("Gagal update status appointment:", err);
+            }
+          }
           setReceipt(transaction);
           setPaymentModalOpen(false);
           setItems([]);
@@ -594,9 +667,59 @@ export default function PosNewPage() {
           setAppliedPromo(null);
           setPromoInput("");
           setPromoError(null);
+          setActiveAppointmentId(null);
+          setAppointmentVersion((v) => v + 1);
           setStockVersion((v) => v + 1);
         }}
       />
+
+      <Modal
+        open={appointmentModalOpen}
+        onClose={() => setAppointmentModalOpen(false)}
+        eyebrow="Antrean Selesai"
+        title="Tarik Antrean Siap Bayar"
+      >
+        <div className="space-y-2.5">
+          {completedAppointments.length === 0 ? (
+            <div className="py-6 text-center text-xs text-text-faint">
+              Tidak ada antrean berstatus selesai yang belum dibayar.
+            </div>
+          ) : (
+            completedAppointments.map((appt) => (
+              <div
+                key={appt.id}
+                className="flex items-center justify-between rounded-lg border border-border bg-surface-2/60 p-3 text-xs"
+              >
+                <div>
+                  <div className="flex items-center gap-2 font-bold text-text">
+                    <span className="rounded bg-gold-bright/20 px-1.5 py-0.5 font-mono text-[11px] text-gold-bright">
+                      #{appt.queueNumber ?? "—"}
+                    </span>
+                    <span>{appt.customer.name}</span>
+                    {appt.customer.type === "member" && (
+                      <span className="rounded bg-gold-bright/15 px-1 py-0.2 text-[10px] text-gold-bright">
+                        {appt.customer.tier}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 text-[11px] text-text-muted">
+                    Layanan: <span className="font-semibold text-text">{appt.serviceName}</span> · Barber:{" "}
+                    <span className="text-gold-bright">{appt.barberName}</span>
+                  </div>
+                  <div className="text-[11px] font-bold text-text">{formatRupiah(appt.price)}</div>
+                </div>
+                <Button
+                  variant="primary"
+                  className="text-xs"
+                  onClick={() => handleLoadAppointment(appt)}
+                >
+                  Tarik ke Kasir
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+      </Modal>
 
       <Modal
         open={receipt !== null}

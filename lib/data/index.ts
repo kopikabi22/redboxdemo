@@ -15,3 +15,4 @@ export * from './closing';
 export * from './membership';
 export * from './membershipActivation';
 export * from './promotions';
+export * from './appointments';

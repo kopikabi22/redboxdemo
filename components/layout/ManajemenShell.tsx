@@ -14,6 +14,7 @@ export interface ManajemenNavItem {
 const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "overview", label: "Ringkasan", href: "/manajemen" },
   { id: "branch", label: "Branch Management", href: "/manajemen/branch" },
+  { id: "appointments", label: "Reservasi & Antrean", href: "/manajemen/appointments" },
   { id: "catalog", label: "Product & Service Master", href: "/manajemen/catalog" },
   { id: "customers", label: "Customer Database", href: "/manajemen/customers" },
   { id: "membership", label: "Membership & Loyalty", href: "/manajemen/membership" },
