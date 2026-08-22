@@ -16,6 +16,7 @@ const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "branch", label: "Branch Management", href: "/manajemen/branch" },
   { id: "appointments", label: "Reservasi & Antrean", href: "/manajemen/appointments" },
   { id: "catalog", label: "Product & Service Master", href: "/manajemen/catalog" },
+  { id: "batches", label: "Batch & Kadaluarsa", href: "/manajemen/inventory/batches" },
   { id: "customers", label: "Customer Database", href: "/manajemen/customers" },
   { id: "membership", label: "Membership & Loyalty", href: "/manajemen/membership" },
   { id: "promotions", label: "Promosi & Diskon", href: "/manajemen/promotions" },

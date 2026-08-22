@@ -17,3 +17,4 @@ export * from './membershipActivation';
 export * from './promotions';
 export * from './appointments';
 export * from './schedules';
+export * from './batches';

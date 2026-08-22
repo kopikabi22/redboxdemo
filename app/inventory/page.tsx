@@ -10,6 +10,8 @@ import {
   getAvailableStock,
   getStockStatus,
   recordStockMove,
+  getBatchesByProductAndBranch,
+  evaluateExpiryStatus,
 } from "@/lib/data";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { AppShell, getNavItemsForRole } from "@/components/layout/AppShell";
@@ -92,13 +94,25 @@ export default function InventoryPage() {
         {products.map((product) => {
           const qty = getAvailableStock(product.id, employee.branchId);
           const status = getStockStatus(qty, product.lowStockThreshold);
+          const productBatches = getBatchesByProductAndBranch(product.id, employee.branchId);
+          const hasExpired = productBatches.some((b) => evaluateExpiryStatus(b.expiryDate) === "expired");
+          const hasNearExpiry = productBatches.some((b) => evaluateExpiryStatus(b.expiryDate) === "near_expiry");
+
           return (
             <div key={product.id} className="rounded-lg border border-border bg-surface p-3">
               <div className="mb-1 text-sm font-bold">{product.name}</div>
               <div className="mb-2 text-xs text-text-faint">{product.category}</div>
-              <Badge tone={status === "cukup" ? "ok" : status === "rendah" ? "warn" : "danger"}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </Badge>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge tone={status === "cukup" ? "ok" : status === "rendah" ? "warn" : "danger"}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)} ({qty})
+                </Badge>
+                {hasExpired && (
+                  <Badge tone="danger">⛔ Kadaluarsa</Badge>
+                )}
+                {!hasExpired && hasNearExpiry && (
+                  <Badge tone="warn">⚠️ Kritis (≤ 30 Hari)</Badge>
+                )}
+              </div>
             </div>
           );
         })}

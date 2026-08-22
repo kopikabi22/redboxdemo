@@ -2,6 +2,7 @@ import { StorageKeys, readCollection, writeCollection, generateId, nowIso } from
 import { recordStockMove, getAvailableStock } from './stock';
 import { earnPointsForTransaction } from './membership';
 import { validateAndCalculatePromo, incrementPromoUsage } from './promotions';
+import { deductStockFEFO } from './batches';
 import type {
   CashMove,
   Customer,
@@ -14,6 +15,7 @@ import type {
   PaymentMethod,
   AppliedPromoInfo,
   Promotion,
+  ProductBatch,
 } from './types';
 
 const TAX_RATE = 0.1;
@@ -125,10 +127,11 @@ export function checkout(input: CheckoutInput): Transaction {
     timestamp: nowIso(),
   };
 
-  // Deep-copy snapshots across all 7 collections
+  // Deep-copy snapshots across all 8 collections
   const transactionsSnapshot = structuredClone(readCollection<Transaction>(StorageKeys.transactions));
   const stockMovesSnapshot = structuredClone(readCollection<StockMove>(StorageKeys.stockMoves));
   const inventoryBalancesSnapshot = structuredClone(readCollection<InventoryBalance>(StorageKeys.inventoryBalances));
+  const productBatchesSnapshot = structuredClone(readCollection<ProductBatch>(StorageKeys.productBatches));
   const cashMovesSnapshot = structuredClone(readCollection<CashMove>(StorageKeys.cashMoves));
   const loyaltyLedgerSnapshot = structuredClone(readCollection<LoyaltyLedgerEntry>(StorageKeys.loyaltyLedger));
   const customersSnapshot = structuredClone(readCollection<Customer>(StorageKeys.customers));
@@ -140,6 +143,7 @@ export function checkout(input: CheckoutInput): Transaction {
     writeCollection(StorageKeys.transactions, transactions);
 
     productItems.forEach((item) => {
+      deductStockFEFO(item.itemId, input.branchId, item.qty);
       recordStockMove({
         productId: item.itemId,
         branchId: input.branchId,
@@ -176,6 +180,7 @@ export function checkout(input: CheckoutInput): Transaction {
     writeCollection(StorageKeys.transactions, transactionsSnapshot);
     writeCollection(StorageKeys.stockMoves, stockMovesSnapshot);
     writeCollection(StorageKeys.inventoryBalances, inventoryBalancesSnapshot);
+    writeCollection(StorageKeys.productBatches, productBatchesSnapshot);
     writeCollection(StorageKeys.cashMoves, cashMovesSnapshot);
     writeCollection(StorageKeys.loyaltyLedger, loyaltyLedgerSnapshot);
     writeCollection(StorageKeys.customers, customersSnapshot);

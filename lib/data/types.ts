@@ -366,3 +366,27 @@ export interface ShiftSchedule {
   updatedAt: string;
 }
 
+export type ExpiryStatus = 'safe' | 'near_expiry' | 'expired';
+
+export interface ProductBatch {
+  id: string;
+  productId: string;
+  branchId: string;
+  batchNumber: string;
+  expiryDate: string; // YYYY-MM-DD
+  initialQty: number;
+  remainingQty: number;
+  receivedDate: string; // YYYY-MM-DD
+  cost: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeductedBatchInfo {
+  batchId: string;
+  batchNumber: string;
+  qty: number;
+  expiryDate: string;
+}
+

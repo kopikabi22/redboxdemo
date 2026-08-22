@@ -15,6 +15,7 @@ import type {
   TransactionLineItem,
   Promotion,
   Employee,
+  ProductBatch,
 } from './types';
 
 const BRANCH_ID = 'br_test';
@@ -63,6 +64,7 @@ function snapshotAllCollections() {
     loyaltyLedger: readCollection<LoyaltyLedgerEntry>(StorageKeys.loyaltyLedger),
     customers: readCollection<Customer>(StorageKeys.customers),
     promotions: readCollection<Promotion>(StorageKeys.promotions),
+    productBatches: readCollection<ProductBatch>(StorageKeys.productBatches),
   };
 }
 
