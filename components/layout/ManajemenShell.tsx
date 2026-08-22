@@ -32,6 +32,8 @@ const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "finance_pnl", label: "Laba Rugi (P&L)", href: "/manajemen/finance/pnl" },
   { id: "finance_expenses", label: "Beban Operasional", href: "/manajemen/finance/expenses" },
   { id: "finance_ap", label: "Hutang Dagang (AP)", href: "/manajemen/finance/ap" },
+  { id: "targets", label: "Target & KPI Cabang", href: "/manajemen/targets" },
+  { id: "audit", label: "Audit Trail / Log", href: "/manajemen/audit" },
 ];
 
 interface ManajemenShellProps {

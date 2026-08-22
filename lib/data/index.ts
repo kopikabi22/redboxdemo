@@ -23,3 +23,5 @@ export * from './purchasing';
 export * from './stockOps';
 export * from './payroll';
 export * from './finance';
+export * from './audit';
+export * from './targets';

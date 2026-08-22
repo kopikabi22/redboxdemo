@@ -708,3 +708,68 @@ export interface CashFlowReport {
   netCashFlow: number;
 }
 
+export interface BranchTarget {
+  id: string;
+  branchId: string;
+  branchName: string;
+  periodMonth: string; // "YYYY-MM"
+  targetRevenue: number;
+  targetTransactions: number;
+  targetNewCustomers: number;
+  targetMembershipActivations: number;
+  notes?: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TargetStatus = 'achieved' | 'on_track' | 'at_risk' | 'off_track';
+
+export interface BranchTargetProgress {
+  target: BranchTarget;
+  actualRevenue: number;
+  actualTransactions: number;
+  actualNewCustomers: number;
+  actualMembershipActivations: number;
+  revenuePercentage: number;
+  transactionsPercentage: number;
+  newCustomersPercentage: number;
+  membershipPercentage: number;
+  overallPercentage: number;
+  status: TargetStatus;
+}
+
+export type AuditActionType =
+  | 'VOID_TRANSACTION'
+  | 'REFUND_TRANSACTION'
+  | 'APPROVE_PO'
+  | 'RECEIVE_PO'
+  | 'DISPATCH_TRANSFER'
+  | 'RECEIVE_TRANSFER'
+  | 'COMPLETE_OPNAME'
+  | 'APPROVE_PAYROLL'
+  | 'PAY_PAYROLL'
+  | 'CREATE_EXPENSE'
+  | 'DELETE_EXPENSE'
+  | 'PAY_AP'
+  | 'SET_BRANCH_TARGET'
+  | 'STOCK_ADJUSTMENT'
+  | 'PRICE_OVERRIDE'
+  | 'ROLE_CHANGE';
+
+export interface AuditLogRecord {
+  id: string;
+  timestamp: string;
+  actorId: string;
+  actorName: string;
+  actorRole: string;
+  branchId: string | null;
+  branchName: string;
+  action: AuditActionType | string;
+  entityType: string;
+  entityId: string;
+  details: string;
+  metadata?: Record<string, unknown> | null;
+}
+
