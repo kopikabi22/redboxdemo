@@ -20,6 +20,7 @@ const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "membership", label: "Membership & Loyalty", href: "/manajemen/membership" },
   { id: "promotions", label: "Promosi & Diskon", href: "/manajemen/promotions" },
   { id: "employees", label: "Employee Master", href: "/manajemen/employees" },
+  { id: "schedules", label: "Jadwal Kerja (Roster)", href: "/manajemen/schedules" },
 ];
 
 interface ManajemenShellProps {

@@ -23,6 +23,7 @@ export function getNavItemsForRole(role: EmployeeRole): NavItem[] {
       { id: "pos", label: "POS", href: "/pos/new" },
       { id: "appointment", label: "Appointment & Queue", href: "/appointment" },
       { id: "attendance", label: "Attendance & Break", href: "/attendance" },
+      { id: "schedules", label: "Jadwal Saya", href: "/schedules" },
       { id: "inventory", label: "Inventory", href: "/inventory" },
       // Barber doesn't handle cash, so this tab is Kasir-only — consistent
       // with Inventory above.
@@ -33,6 +34,7 @@ export function getNavItemsForRole(role: EmployeeRole): NavItem[] {
     return [
       { id: "appointment", label: "Appointment & Queue", href: "/appointment" },
       { id: "attendance", label: "Attendance & Break", href: "/attendance" },
+      { id: "schedules", label: "Jadwal Saya", href: "/schedules" },
     ];
   }
   return [];

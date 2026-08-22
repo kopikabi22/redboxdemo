@@ -1,6 +1,7 @@
 import { StorageKeys, readCollection, writeCollection, generateId, nowIso } from './storage';
 import { getEmployeeById } from './employees';
 import { getServices } from './catalog';
+import { getEmployeeSchedule } from './schedules';
 import { HOME_SERVICE_PRICING, WEDDING_GROOMING_PRICING } from './types';
 import type {
   Appointment,
@@ -47,6 +48,22 @@ export function checkBarberAvailability(
 
   if (newStart >= newEnd) return false;
 
+  // 1. Check Shift Schedule constraint (if defined)
+  const schedule = getEmployeeSchedule(barberId, date);
+  if (schedule) {
+    if (schedule.shiftType === 'off' || schedule.shiftType === 'cuti') {
+      return false;
+    }
+    if (schedule.startTime && schedule.endTime) {
+      const shiftStart = timeToMinutes(schedule.startTime);
+      const shiftEnd = timeToMinutes(schedule.endTime);
+      if (newStart < shiftStart || newEnd > shiftEnd) {
+        return false;
+      }
+    }
+  }
+
+  // 2. Check collision against existing non-cancelled appointments
   const existingList = getAppointments().filter(
     (a) =>
       a.barberId === barberId &&

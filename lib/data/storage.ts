@@ -24,6 +24,7 @@ export const StorageKeys = {
   rewardRedemptions: `${STORAGE_PREFIX}reward_redemptions`,
   promotions: `${STORAGE_PREFIX}promotions`,
   appointments: `${STORAGE_PREFIX}appointments`,
+  schedules: `${STORAGE_PREFIX}schedules`,
   seeded: `${STORAGE_PREFIX}seeded_v1`,
 } as const;
 

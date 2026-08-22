@@ -13,6 +13,8 @@ export interface Branch {
   province: string;
   address: string;
   phone: string;
+  /** Minimum number of active barbers required on duty per day. Defaults to 1. */
+  minBarberCoverage?: number;
 }
 
 export interface Employee {
@@ -335,6 +337,31 @@ export interface Appointment {
   notes?: string;
   noShowReason?: string | null;
   transactionId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ShiftType = 'pagi' | 'siang' | 'full' | 'off' | 'cuti';
+
+export const SHIFT_TIMES: Record<ShiftType, { startTime: string; endTime: string; label: string }> = {
+  pagi: { startTime: '09:00', endTime: '15:00', label: 'Pagi (09:00 - 15:00)' },
+  siang: { startTime: '15:00', endTime: '21:00', label: 'Siang (15:00 - 21:00)' },
+  full: { startTime: '09:00', endTime: '21:00', label: 'Full Day (09:00 - 21:00)' },
+  off: { startTime: '', endTime: '', label: 'Day Off (Libur)' },
+  cuti: { startTime: '', endTime: '', label: 'Cuti / Izin' },
+};
+
+export interface ShiftSchedule {
+  id: string;
+  branchId: string;
+  employeeId: string;
+  employeeName: string;
+  role: EmployeeRole;
+  date: string; // YYYY-MM-DD
+  shiftType: ShiftType;
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }
