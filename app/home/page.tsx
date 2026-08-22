@@ -17,7 +17,7 @@ export default function HomePage() {
     } else if (session.role === "Kasir") {
       router.replace("/pos/new");
     } else if (session.role === "Barber") {
-      router.replace("/appointment/queue");
+      router.replace("/attendance");
     } else {
       router.replace("/manajemen");
     }

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSessionEmployee, clearSession, getBranchById } from "@/lib/data";
 import { useIsClient } from "@/lib/hooks/useIsClient";
-import { Button } from "@/components/ui/Button";
+import { AppShell, getNavItemsForRole } from "@/components/layout/AppShell";
 
 /** Placeholder — Appointment & Queue is Tier 2 scope, not built yet. */
 export default function AppointmentQueuePlaceholderPage() {
@@ -29,15 +29,20 @@ export default function AppointmentQueuePlaceholderPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg px-6 text-center">
-      <div className="font-display text-3xl tracking-wide">Appointment &amp; Queue</div>
-      <div className="font-accent italic text-gold-bright">Tier 2 — belum dibangun</div>
-      <p className="max-w-sm text-sm text-text-muted">
-        Halo {session.name}, modul Appointment &amp; Queue untuk cabang {branch?.name ?? "—"} akan tersedia di Tier 2.
-      </p>
-      <Button variant="ghost" onClick={handleLogout}>
-        Keluar / Ganti Akun
-      </Button>
-    </div>
+    <AppShell
+      employee={session}
+      branch={branch}
+      pageTitle="Appointment & Queue"
+      navItems={getNavItemsForRole(session.role)}
+      activeNavId="appointment"
+      onLogout={handleLogout}
+    >
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-16 text-center">
+        <div className="font-accent italic text-gold-bright">Tier 2 — belum dibangun</div>
+        <p className="max-w-sm text-sm text-text-muted">
+          Modul Appointment &amp; Queue untuk cabang {branch?.name ?? "—"} akan tersedia di Tier 2.
+        </p>
+      </div>
+    </AppShell>
   );
 }

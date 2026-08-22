@@ -2,13 +2,36 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { Branch, Employee } from "@/lib/data";
+import type { Branch, Employee, EmployeeRole } from "@/lib/data";
 import { Button } from "@/components/ui/Button";
 
 export interface NavItem {
   id: string;
   label: string;
   href: string;
+}
+
+/**
+ * Single source of truth for which tabs each POV Karyawan role sees in the
+ * unified "Operasional Cabang" shell — Kasir gets the full operational set,
+ * Barber only Appointment & Queue (placeholder for now) and Attendance &
+ * Break, per CLAUDE.md's role-based tab visibility rule.
+ */
+export function getNavItemsForRole(role: EmployeeRole): NavItem[] {
+  if (role === "Kasir") {
+    return [
+      { id: "pos", label: "POS", href: "/pos/new" },
+      { id: "attendance", label: "Attendance & Break", href: "/attendance" },
+      { id: "inventory", label: "Inventory", href: "/inventory" },
+    ];
+  }
+  if (role === "Barber") {
+    return [
+      { id: "appointment", label: "Appointment & Queue", href: "/appointment/queue" },
+      { id: "attendance", label: "Attendance & Break", href: "/attendance" },
+    ];
+  }
+  return [];
 }
 
 interface AppShellProps {
