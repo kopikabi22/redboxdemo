@@ -2,41 +2,73 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getSessionEmployee, clearSession } from "@/lib/data";
+import { getSessionEmployee, clearSession, getBranches, getEmployees, getCustomers, getServices, getProducts } from "@/lib/data";
 import { useIsClient } from "@/lib/hooks/useIsClient";
-import { Button } from "@/components/ui/Button";
+import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
+import { ManajemenShell } from "@/components/layout/ManajemenShell";
 
-/** Placeholder — POV Manajemen routes haven't been designed yet (see CLAUDE.md). */
-export default function ManajemenPlaceholderPage() {
+export default function ManajemenOverviewPage() {
   const router = useRouter();
   const isClient = useIsClient();
-  const session = isClient ? getSessionEmployee("karyawan") : null;
+  const session = isClient ? getSessionEmployee("manajemen") : null;
+  const branches = isClient ? getBranches() : [];
+  const { selectedBranchId, setSelectedBranchId } = useSelectedBranchId(session, branches);
 
   useEffect(() => {
     if (isClient && !session) {
-      router.replace("/login");
+      router.replace("/manajemen/login");
     }
   }, [isClient, session, router]);
 
   function handleLogout() {
-    clearSession("karyawan");
-    router.replace("/login");
+    clearSession("manajemen");
+    router.replace("/manajemen/login");
   }
 
   if (!session) {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;
   }
 
+  const employees = getEmployees();
+  const branchEmployeeCount = employees.filter((e) => e.branchId === selectedBranchId).length;
+  const customers = getCustomers();
+  const services = getServices();
+  const products = getProducts();
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg px-6 text-center">
-      <div className="font-display text-3xl tracking-wide">POV Manajemen</div>
-      <div className="font-accent italic text-gold-bright">Menyusul</div>
-      <p className="max-w-sm text-sm text-text-muted">
-        Halo {session.name}, struktur route POV Manajemen belum didesain — akan menyusul setelah dibahas terpisah.
-      </p>
-      <Button variant="ghost" onClick={handleLogout}>
-        Keluar / Ganti Akun
-      </Button>
+    <ManajemenShell
+      employee={session}
+      branches={branches}
+      selectedBranchId={selectedBranchId}
+      onBranchChange={setSelectedBranchId}
+      pageTitle="Ringkasan"
+      activeNavId="overview"
+      onLogout={handleLogout}
+    >
+      <div className="font-accent mb-1 text-xs italic text-gold-bright">Konsolidasi Semua Cabang</div>
+      <div className="mb-5 font-display text-3xl tracking-wide">Ringkasan Operasional</div>
+
+      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
+        <StatCard label="Cabang" value={branches.length} />
+        <StatCard label="Karyawan (total)" value={employees.length} />
+        <StatCard label={`Karyawan — cabang terpilih`} value={branchEmployeeCount} />
+        <StatCard label="Customer Terdaftar" value={customers.length} />
+        <StatCard label="Layanan" value={services.length} />
+        <StatCard label="SKU Produk" value={products.length} />
+      </div>
+
+      <div className="mt-5 text-xs text-text-faint">
+        Finance/P&amp;L, cash review, dan Analytics &amp; BI lengkap tersedia di Tier 3/4.
+      </div>
+    </ManajemenShell>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="font-display text-3xl text-gold-bright">{value}</div>
+      <div className="text-xs uppercase tracking-wide text-text-muted">{label}</div>
     </div>
   );
 }
