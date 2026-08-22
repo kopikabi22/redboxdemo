@@ -3,22 +3,28 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { searchMemberCustomers } from "@/lib/data";
+import { searchMemberCustomers, getMembershipActivationFee, formatRupiah } from "@/lib/data";
 import type { TransactionCustomer } from "@/lib/data";
 
 interface CustomerPickerModalProps {
   open: boolean;
   onClose: () => void;
   onSelect: (customer: TransactionCustomer) => void;
+  /** "Daftar Baru" hands off to a separate activation-payment flow the caller owns — this modal never calls checkout() itself. */
+  onStartRegistration: (draft: { name: string; phone: string; referrerId: string | null }) => void;
 }
 
-type Mode = "member" | "guest";
+type Mode = "member" | "guest" | "register";
 
-export function CustomerPickerModal({ open, onClose, onSelect }: CustomerPickerModalProps) {
+export function CustomerPickerModal({ open, onClose, onSelect, onStartRegistration }: CustomerPickerModalProps) {
   const [mode, setMode] = useState<Mode>("member");
   const [query, setQuery] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
   const [guestError, setGuestError] = useState<string | null>(null);
+  const [regName, setRegName] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regReferrerPhone, setRegReferrerPhone] = useState("");
+  const [regError, setRegError] = useState<string | null>(null);
 
   // Reset the form the instant `open` flips to true — done during render
   // (React's documented "adjusting state when a prop changes" pattern),
@@ -32,10 +38,16 @@ export function CustomerPickerModal({ open, onClose, onSelect }: CustomerPickerM
       setQuery("");
       setGuestPhone("");
       setGuestError(null);
+      setRegName("");
+      setRegPhone("");
+      setRegReferrerPhone("");
+      setRegError(null);
     }
   }
 
   const results = searchMemberCustomers(query);
+  const referrerMatch = regReferrerPhone.trim().length >= 8 ? searchMemberCustomers(regReferrerPhone.trim())[0] ?? null : null;
+  const activationFee = getMembershipActivationFee();
 
   function handleUseGuestPhone() {
     const trimmed = guestPhone.trim();
@@ -44,6 +56,30 @@ export function CustomerPickerModal({ open, onClose, onSelect }: CustomerPickerM
       return;
     }
     onSelect({ type: "guest", customerId: null, name: "Guest", phone: trimmed, tier: null });
+  }
+
+  function handleStartRegistration() {
+    const name = regName.trim();
+    const phone = regPhone.trim();
+    if (!name) {
+      setRegError("Nama wajib diisi.");
+      return;
+    }
+    if (phone.length < 8) {
+      setRegError("Nomor HP minimal 8 digit.");
+      return;
+    }
+    const referrerPhoneTrimmed = regReferrerPhone.trim();
+    if (referrerPhoneTrimmed.length >= 8 && !referrerMatch) {
+      setRegError("Nomor HP yang mereferensikan tidak ditemukan di daftar member. Kosongkan kalau tidak ada referral.");
+      return;
+    }
+    if (activationFee === null) {
+      setRegError("Service Aktivasi Member tidak ditemukan di katalog. Hubungi Owner/HQ.");
+      return;
+    }
+    setRegError(null);
+    onStartRegistration({ name, phone, referrerId: referrerMatch ? referrerMatch.id : null });
   }
 
   return (
@@ -58,7 +94,7 @@ export function CustomerPickerModal({ open, onClose, onSelect }: CustomerPickerM
         </Button>
       }
     >
-      <div className="mb-3 grid grid-cols-2 gap-2">
+      <div className="mb-3 grid grid-cols-3 gap-2">
         <button
           type="button"
           onClick={() => setMode("member")}
@@ -77,9 +113,18 @@ export function CustomerPickerModal({ open, onClose, onSelect }: CustomerPickerM
         >
           Guest
         </button>
+        <button
+          type="button"
+          onClick={() => setMode("register")}
+          className={`rounded-md border px-3 py-2.5 text-center text-xs font-bold ${
+            mode === "register" ? "border-gold-bright bg-surface-2 text-gold-bright" : "border-border bg-surface text-text-muted"
+          }`}
+        >
+          Daftar Baru
+        </button>
       </div>
 
-      {mode === "member" ? (
+      {mode === "member" && (
         <div>
           <input
             type="text"
@@ -117,7 +162,9 @@ export function CustomerPickerModal({ open, onClose, onSelect }: CustomerPickerM
             ))
           )}
         </div>
-      ) : (
+      )}
+
+      {mode === "guest" && (
         <div>
           <div className="mb-1.5 text-[11.5px] uppercase tracking-wide text-text-faint">Nomor HP Guest (wajib)</div>
           <input
@@ -137,6 +184,51 @@ export function CustomerPickerModal({ open, onClose, onSelect }: CustomerPickerM
           </div>
           <Button variant="primary" fullWidth className="mt-3.5" onClick={handleUseGuestPhone}>
             Pakai Nomor Ini
+          </Button>
+        </div>
+      )}
+
+      {mode === "register" && (
+        <div>
+          <div className="mb-1.5 text-[11.5px] uppercase tracking-wide text-text-faint">Nama</div>
+          <input
+            type="text"
+            placeholder="Nama lengkap"
+            value={regName}
+            onChange={(event) => setRegName(event.target.value)}
+            className="mb-2.5 w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-text placeholder:text-text-faint focus:border-gold-bright focus:outline-none"
+          />
+          <div className="mb-1.5 text-[11.5px] uppercase tracking-wide text-text-faint">Nomor HP</div>
+          <input
+            type="tel"
+            inputMode="numeric"
+            placeholder="08xxxxxxxxxx"
+            value={regPhone}
+            onChange={(event) => setRegPhone(event.target.value.replace(/[^0-9]/g, ""))}
+            className="mb-2.5 w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-text placeholder:text-text-faint focus:border-gold-bright focus:outline-none"
+          />
+          <div className="mb-1.5 text-[11.5px] uppercase tracking-wide text-text-faint">Nomor HP yang Mereferensikan (opsional)</div>
+          <input
+            type="tel"
+            inputMode="numeric"
+            placeholder="08xxxxxxxxxx"
+            value={regReferrerPhone}
+            onChange={(event) => setRegReferrerPhone(event.target.value.replace(/[^0-9]/g, ""))}
+            className="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-text placeholder:text-text-faint focus:border-gold-bright focus:outline-none"
+          />
+          {regReferrerPhone.trim().length >= 8 && (
+            <div className={`mt-1.5 text-xs ${referrerMatch ? "text-gold-bright" : "text-danger"}`}>
+              {referrerMatch ? `Ditemukan: ${referrerMatch.name}` : "Tidak ditemukan di daftar member."}
+            </div>
+          )}
+          {regError && <div className="mt-1.5 text-xs text-danger">{regError}</div>}
+          <div className="mt-2 text-xs text-text-faint">
+            {activationFee !== null
+              ? `Aktivasi member sekali bayar ${formatRupiah(activationFee)}, berlaku seumur hidup. Setelah ini, layar pembayaran aktivasi akan terbuka.`
+              : "Service Aktivasi Member belum tersedia di katalog — hubungi Owner/HQ sebelum mendaftarkan member baru."}
+          </div>
+          <Button variant="primary" fullWidth className="mt-3.5" onClick={handleStartRegistration}>
+            Lanjut ke Pembayaran Aktivasi
           </Button>
         </div>
       )}

@@ -16,6 +16,10 @@ import {
   holdBill,
   retrieveHeldBill,
   formatRupiah,
+  activateMembership,
+  MembershipActivationError,
+  MEMBERSHIP_ACTIVATION_SERVICE_ID,
+  getMembershipActivationFee,
 } from "@/lib/data";
 import type { Service, Product, TransactionCustomer, TransactionLineItem, Transaction } from "@/lib/data";
 import { useIsClient } from "@/lib/hooks/useIsClient";
@@ -34,7 +38,12 @@ export default function PosNewPage() {
   const session = isClient ? getSessionEmployee("karyawan") : null;
   const employee = session && session.role === "Kasir" ? session : null;
   const branch = employee ? getBranchById(employee.branchId) : undefined;
-  const services = employee ? getServices() : [];
+  // Excludes the membership activation Service — it's a real catalog row
+  // (so Owner/HQ can price it via Product & Service Master), but it must
+  // NEVER be addable as an ordinary cart line: doing so would charge it
+  // with normal 10% tax and skip the whole createCustomer()/referral flow
+  // in activateMembership(). It's only reachable via "Daftar Baru".
+  const services = employee ? getServices().filter((s) => s.id !== MEMBERSHIP_ACTIVATION_SERVICE_ID) : [];
   const products = employee ? getProducts() : [];
 
   const [tab, setTab] = useState<CatalogTab>("service");
@@ -47,6 +56,10 @@ export default function PosNewPage() {
   const [stockVersion, setStockVersion] = useState(0);
   const [heldBillsVersion, setHeldBillsVersion] = useState(0);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [registrationDraft, setRegistrationDraft] = useState<{ name: string; phone: string; referrerId: string | null } | null>(null);
+  const [activationFollowUp, setActivationFollowUp] = useState<{ transactionId: string; message: string; name: string; phone: string } | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!isClient) return;
@@ -203,6 +216,21 @@ export default function PosNewPage() {
               {infoMessage}
             </div>
           )}
+          {activationFollowUp && (
+            <div className="mb-3 rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-sm text-warn">
+              <span className="font-bold">Pembayaran aktivasi member sudah diterima (transaksi {activationFollowUp.transactionId}),</span>{" "}
+              tapi pendaftarannya gagal: {activationFollowUp.message} JANGAN ulangi pembayaran ini. Owner/HQ: tambahkan
+              customer &quot;{activationFollowUp.name}&quot; ({activationFollowUp.phone}) secara manual di Customer
+              Database, dengan transaksi {activationFollowUp.transactionId} sebagai bukti bayar.
+              <button
+                type="button"
+                onClick={() => setActivationFollowUp(null)}
+                className="ml-2 font-bold underline underline-offset-2"
+              >
+                Tutup
+              </button>
+            </div>
+          )}
 
           {tab === "held" ? (
             heldBills.length === 0 ? (
@@ -344,6 +372,58 @@ export default function PosNewPage() {
         onSelect={(selected) => {
           setCustomer(selected);
           setCustomerModalOpen(false);
+        }}
+        onStartRegistration={(draft) => {
+          setRegistrationDraft(draft);
+          setCustomerModalOpen(false);
+        }}
+      />
+
+      <PaymentModal
+        open={registrationDraft !== null}
+        onClose={() => setRegistrationDraft(null)}
+        total={getMembershipActivationFee() ?? 0}
+        onConfirm={(method, cashTendered) => {
+          if (!registrationDraft) return;
+          try {
+            const result = activateMembership({
+              branchId: employee.branchId,
+              cashierId: employee.id,
+              cashierName: employee.name,
+              name: registrationDraft.name,
+              phone: registrationDraft.phone,
+              method,
+              cashTendered,
+              referrerId: registrationDraft.referrerId ?? undefined,
+            });
+            setCustomer({
+              type: "member",
+              customerId: result.customer.id,
+              name: result.customer.name,
+              phone: result.customer.phone,
+              tier: result.customer.tier,
+            });
+            setRegistrationDraft(null);
+            setInfoMessage(`Member baru terdaftar: ${result.customer.name}.`);
+          } catch (err) {
+            if (err instanceof MembershipActivationError) {
+              // Payment already went through — closing this modal here (rather
+              // than leaving it open for "retry") is deliberate: retrying would
+              // resubmit a SECOND checkout() and double-charge the customer.
+              setRegistrationDraft(null);
+              setActivationFollowUp({
+                transactionId: err.committedTransaction.id,
+                message: err.message,
+                name: registrationDraft.name,
+                phone: registrationDraft.phone,
+              });
+              return;
+            }
+            // Anything else (e.g. checkout() itself rejecting) — nothing was
+            // charged, so let PaymentModal's own catch show it inline and
+            // keep the modal open for the cashier to correct and retry.
+            throw err;
+          }
         }}
       />
 

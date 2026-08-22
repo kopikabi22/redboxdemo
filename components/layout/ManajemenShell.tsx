@@ -16,6 +16,7 @@ const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "branch", label: "Branch Management", href: "/manajemen/branch" },
   { id: "catalog", label: "Product & Service Master", href: "/manajemen/catalog" },
   { id: "customers", label: "Customer Database", href: "/manajemen/customers" },
+  { id: "membership", label: "Membership & Loyalty", href: "/manajemen/membership" },
   { id: "employees", label: "Employee Master", href: "/manajemen/employees" },
 ];
 
