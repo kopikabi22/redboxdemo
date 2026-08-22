@@ -1,8 +1,11 @@
 import { StorageKeys, readCollection, writeCollection, generateId, nowIso } from './storage';
 import { recordStockMove, getAvailableStock } from './stock';
+import { earnPointsForTransaction } from './membership';
 import type {
   CashMove,
+  Customer,
   InventoryBalance,
+  LoyaltyLedgerEntry,
   StockMove,
   Transaction,
   TransactionCustomer,
@@ -14,7 +17,8 @@ const TAX_RATE = 0.1;
 
 export function calculateCartTotals(items: TransactionLineItem[]): { subtotal: number; tax: number; total: number } {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const tax = Math.round(subtotal * TAX_RATE);
+  const taxableSubtotal = items.reduce((sum, item) => sum + (item.taxable === false ? 0 : item.price * item.qty), 0);
+  const tax = Math.round(taxableSubtotal * TAX_RATE);
   return { subtotal, tax, total: subtotal + tax };
 }
 
@@ -32,8 +36,10 @@ export interface CheckoutInput {
 /**
  * Finalizes a POS sale as one composite operation: writes the transaction,
  * deducts stock for product lines through the shared stock-movement ledger
- * function (never by touching InventoryBalance directly), and — for Cash —
- * logs the matching cash-in movement.
+ * function (never by touching InventoryBalance directly), logs the
+ * matching cash-in movement for Cash payments, and — for member customers —
+ * earns loyalty points through the shared, already-hardened
+ * earnPointsForTransaction()/recordLoyaltyLedgerEntry() path.
  *
  * Safety nets around that, all checked *before* anything is written:
  *  1. Stock is validated per distinct productId with quantities summed
@@ -43,13 +49,18 @@ export interface CheckoutInput {
  *     let two lines under-count a product that's over-sold in total.
  *  2. For Cash payments, cashTendered must cover the total — the data
  *     layer doesn't trust the UI to have already enforced this.
- *  3. The four collections it can touch (transactions, stockMoves,
- *     inventoryBalances, cashMoves) are snapshotted up front. If anything
- *     throws once writing has started (including a write itself failing,
- *     since storage.writeCollection no longer swallows errors), every one
- *     of those four collections is restored to its snapshot before the
- *     error is re-thrown — so a failed checkout never leaves a half-saved
- *     transaction, a stock deduction with no matching sale, or vice versa.
+ *  3. The SIX collections it can touch (transactions, stockMoves,
+ *     inventoryBalances, cashMoves, loyaltyLedger, customers) are
+ *     snapshotted up front. If anything throws once writing has started
+ *     (including a write itself failing, since storage.writeCollection no
+ *     longer swallows errors), every one of those six collections is
+ *     restored to its snapshot before the error is re-thrown — so a failed
+ *     checkout never leaves a half-saved transaction, a stock deduction
+ *     with no matching sale, a cash-in with no transaction, or points
+ *     earned for a sale that didn't actually go through (or vice versa).
+ *     earnPointsForTransaction() has its own inner snapshot/rollback too
+ *     (via recordLoyaltyLedgerEntry) — the two layers are intentionally
+ *     independent, same as the existing stock case.
  */
 export function checkout(input: CheckoutInput): Transaction {
   const productItems = input.items.filter((item) => item.kind === 'product');
@@ -95,6 +106,8 @@ export function checkout(input: CheckoutInput): Transaction {
   const stockMovesSnapshot = structuredClone(readCollection<StockMove>(StorageKeys.stockMoves));
   const inventoryBalancesSnapshot = structuredClone(readCollection<InventoryBalance>(StorageKeys.inventoryBalances));
   const cashMovesSnapshot = structuredClone(readCollection<CashMove>(StorageKeys.cashMoves));
+  const loyaltyLedgerSnapshot = structuredClone(readCollection<LoyaltyLedgerEntry>(StorageKeys.loyaltyLedger));
+  const customersSnapshot = structuredClone(readCollection<Customer>(StorageKeys.customers));
 
   try {
     const transactions = readCollection<Transaction>(StorageKeys.transactions);
@@ -127,12 +140,16 @@ export function checkout(input: CheckoutInput): Transaction {
       writeCollection(StorageKeys.cashMoves, cashMoves);
     }
 
+    earnPointsForTransaction(transaction);
+
     return transaction;
   } catch (err) {
     writeCollection(StorageKeys.transactions, transactionsSnapshot);
     writeCollection(StorageKeys.stockMoves, stockMovesSnapshot);
     writeCollection(StorageKeys.inventoryBalances, inventoryBalancesSnapshot);
     writeCollection(StorageKeys.cashMoves, cashMovesSnapshot);
+    writeCollection(StorageKeys.loyaltyLedger, loyaltyLedgerSnapshot);
+    writeCollection(StorageKeys.customers, customersSnapshot);
     throw err;
   }
 }

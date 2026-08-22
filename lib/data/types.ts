@@ -88,6 +88,13 @@ export interface TransactionLineItem {
   name: string;
   price: number;
   qty: number;
+  /**
+   * Defaults to taxable when omitted — every ordinary service/product line
+   * leaves this unset. Only the membership activation fee sets it to
+   * false: CLAUDE.md specifies that fee as a flat Rp100.000, not a taxable
+   * goods/service sale, so it must not get 10% added on top.
+   */
+  taxable?: boolean;
 }
 
 /** Snapshot of the chosen customer at time of sale — not a live join, so historical receipts stay stable. */
@@ -184,4 +191,46 @@ export interface CashierClosing {
   totalActual: number;
   totalVariance: number;
   createdAt: string;
+}
+
+export type LoyaltyLedgerEntryType = 'earn' | 'redeem' | 'adjustment' | 'referral_bonus';
+
+/**
+ * Append-only, like StockMove — but unlike StockMove's always-positive qty
+ * with direction inferred from `type`, `points` here is a SIGNED delta.
+ * 'adjustment' legitimately needs to go either direction, so there's no
+ * clean type-implies-sign mapping the way stock's in/out/sale has.
+ */
+export interface LoyaltyLedgerEntry {
+  id: string;
+  customerId: string;
+  type: LoyaltyLedgerEntryType;
+  points: number;
+  reference: string;
+  note: string;
+  actorId: string;
+  timestamp: string;
+}
+
+export interface RewardCatalogItem {
+  id: string;
+  name: string;
+  pointsCost: number;
+  description: string;
+  active: boolean;
+}
+
+export type RedemptionStatus = 'pending' | 'approved' | 'rejected';
+
+export interface RewardRedemption {
+  id: string;
+  customerId: string;
+  rewardId: string;
+  /** Snapshot of the reward at request time — same immutable-history principle as TransactionCustomer. */
+  rewardName: string;
+  pointsCost: number;
+  status: RedemptionStatus;
+  requestedAt: string;
+  decidedAt: string | null;
+  decidedBy: string | null;
 }

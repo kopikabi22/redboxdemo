@@ -17,3 +17,15 @@ export function canManageBranch(actor: Employee, targetBranchId: string): boolea
 export function canEditHoldingData(actor: Employee): boolean {
   return actor.role === 'Owner';
 }
+
+/**
+ * Reward redemption approval: Customer has no branchId (Customer ID
+ * tunggal, lintas cabang), so canManageBranch's "own branch only" shape
+ * doesn't apply here — there's no branch to scope against. Owner and
+ * BranchManager are treated as equally authorized for this operational
+ * approval, the same way either can approve a leave request or a
+ * refund/void. Kasir/Barber are never authorized.
+ */
+export function canApproveRedemption(actor: Employee): boolean {
+  return actor.role === 'Owner' || actor.role === 'BranchManager';
+}

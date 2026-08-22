@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as storage from './storage';
-import { StorageKeys, readCollection } from './storage';
+import { StorageKeys, readCollection, writeCollection } from './storage';
 import { recordStockMove, getAvailableStock } from './stock';
-import { checkout } from './transactions';
+import { checkout, calculateCartTotals } from './transactions';
 import type {
   CashMove,
+  Customer,
   InventoryBalance,
+  LoyaltyLedgerEntry,
   StockMove,
   Transaction,
   TransactionCustomer,
@@ -36,17 +38,60 @@ function seedProductStock(qty: number) {
   });
 }
 
+/**
+ * A real Customer record backing `memberCustomer`'s snapshot — needed now
+ * that checkout() actually looks the customer up (to earn loyalty points),
+ * not just carries the snapshot along. This doesn't change what any test
+ * below asserts, it just completes a fixture that used to get away with
+ * being incomplete.
+ */
+function seedMemberCustomer() {
+  writeCollection<Customer>(StorageKeys.customers, [
+    { id: 'cust_test', name: 'Andi Pratama', phone: '081234567890', type: 'member', tier: 'Gold', points: 0, createdAt: '2026-01-01T00:00:00.000Z' },
+  ]);
+}
+
 function snapshotAllCollections() {
   return {
     transactions: readCollection<Transaction>(StorageKeys.transactions),
     stockMoves: readCollection<StockMove>(StorageKeys.stockMoves),
     inventoryBalances: readCollection<InventoryBalance>(StorageKeys.inventoryBalances),
     cashMoves: readCollection<CashMove>(StorageKeys.cashMoves),
+    loyaltyLedger: readCollection<LoyaltyLedgerEntry>(StorageKeys.loyaltyLedger),
+    customers: readCollection<Customer>(StorageKeys.customers),
   };
 }
 
 beforeEach(() => {
   window.localStorage.clear();
+  seedMemberCustomer();
+});
+
+describe('calculateCartTotals — taxable: false line items', () => {
+  it('excludes a taxable:false line from tax, while an ordinary line still gets taxed', () => {
+    const items: TransactionLineItem[] = [
+      { kind: 'service', itemId: 'svc_a', name: 'Ordinary Service', price: 60000, qty: 1 },
+      { kind: 'service', itemId: 'svc_flat', name: 'Flat Fee', price: 100000, qty: 1, taxable: false },
+    ];
+    const totals = calculateCartTotals(items);
+    expect(totals.subtotal).toBe(160000);
+    expect(totals.tax).toBe(6000); // 10% of the 60000 taxable line only, not the 100000 flat line
+    expect(totals.total).toBe(166000);
+  });
+
+  it('produces zero tax and total === price when the ONLY line is taxable:false', () => {
+    const items: TransactionLineItem[] = [
+      { kind: 'service', itemId: 'svc_flat', name: 'Flat Fee', price: 100000, qty: 1, taxable: false },
+    ];
+    const totals = calculateCartTotals(items);
+    expect(totals.tax).toBe(0);
+    expect(totals.total).toBe(100000);
+  });
+
+  it('an omitted `taxable` field behaves exactly like taxable: true (default, unchanged from before this field existed)', () => {
+    const items: TransactionLineItem[] = [{ kind: 'service', itemId: 'svc_a', name: 'Ordinary Service', price: 60000, qty: 1 }];
+    expect(calculateCartTotals(items)).toEqual(calculateCartTotals([{ ...items[0], taxable: true }]));
+  });
 });
 
 describe('checkout — happy path', () => {
@@ -304,6 +349,74 @@ describe('checkout — mid-way write failure', () => {
       // failure — proving this is a genuine mid-way failure, not one that
       // happened before any write occurred.
       expect(stockMovesWriteAttempts).toBeGreaterThanOrEqual(1);
+
+      const after = snapshotAllCollections();
+      expect(after).toEqual(before);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe('checkout — mid-way write failure in the loyalty-earning step', () => {
+  it('rolls back ALL SIX collections (not just loyaltyLedger/customers) if the loyalty-earning write fails partway through', () => {
+    seedProductStock(10);
+    // A prior successful checkout (including its own successful earn), so
+    // "unchanged" is a meaningful assertion for loyaltyLedger/customers
+    // too — not just "still empty".
+    checkout({
+      branchId: BRANCH_ID,
+      cashierId: 'emp_test',
+      cashierName: 'Dedi Kurniawan',
+      customer: memberCustomer,
+      items: [{ kind: 'service', itemId: SERVICE_ID, name: 'Haircut Reguler', price: 60000, qty: 1 }],
+      method: 'Cash',
+      cashTendered: 100000,
+    });
+
+    const before = snapshotAllCollections();
+
+    const realWriteCollection = storage.writeCollection;
+    let loyaltyLedgerWriteAttempts = 0;
+    const failure = new Error('Simulated localStorage write failure while writing loyaltyLedger');
+    const spy = vi.spyOn(storage, 'writeCollection').mockImplementation((key: string, value: unknown[]) => {
+      if (key === StorageKeys.loyaltyLedger) {
+        loyaltyLedgerWriteAttempts += 1;
+        // Fail only the FIRST attempt (the real earn call, which happens
+        // last inside checkout's try block, AFTER transaction/stock/cash
+        // have all already been written). The rollback's own write to
+        // loyaltyLedger must be allowed to succeed, or the test can't tell
+        // rollback-success from rollback-also-broken.
+        if (loyaltyLedgerWriteAttempts === 1) {
+          throw failure;
+        }
+      }
+      return realWriteCollection(key, value);
+    });
+
+    try {
+      // subtotal 60000 -> floor(60000/10000) = 6 points, so earning
+      // genuinely fires and reaches the mocked write (a 0-point cart would
+      // skip the write entirely and this test would pass vacuously).
+      const items: TransactionLineItem[] = [
+        { kind: 'service', itemId: SERVICE_ID, name: 'Haircut Reguler', price: 60000, qty: 1 },
+      ];
+
+      expect(() =>
+        checkout({
+          branchId: BRANCH_ID,
+          cashierId: 'emp_test',
+          cashierName: 'Dedi Kurniawan',
+          customer: memberCustomer,
+          items,
+          method: 'Cash',
+          cashTendered: 100000,
+        }),
+      ).toThrowError(failure);
+
+      // Proves this is a genuine mid-way failure: transaction, stock, and
+      // cash-in all wrote successfully before the loyalty step failed.
+      expect(loyaltyLedgerWriteAttempts).toBeGreaterThanOrEqual(1);
 
       const after = snapshotAllCollections();
       expect(after).toEqual(before);

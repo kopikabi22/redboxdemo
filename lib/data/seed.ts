@@ -32,6 +32,11 @@ const services: Service[] = [
   { id: 'svc_shave', name: 'Shaving Klasik', category: 'Cukur', durationMinutes: 20, price: 45000, commissionPercent: 20 },
   { id: 'svc_coloring', name: 'Hair Coloring', category: 'Rambut', durationMinutes: 60, price: 150000, commissionPercent: 20 },
   { id: 'svc_facial', name: 'Facial Treatment', category: 'Perawatan', durationMinutes: 30, price: 80000, commissionPercent: 20 },
+  // Fixed id (like every other seed record here, not generateId()) so
+  // membershipActivation.ts can look it up by a well-known constant.
+  // durationMinutes/commissionPercent are structurally required by Service
+  // but not semantically meaningful for this row — set to harmless minimums.
+  { id: 'svc_membership_activation', name: 'Aktivasi Member', category: 'Membership', durationMinutes: 5, price: 100000, commissionPercent: 0 },
 ];
 
 const products: Product[] = [

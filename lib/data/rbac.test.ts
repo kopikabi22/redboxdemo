@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canManageBranch, canEditHoldingData } from './rbac';
+import { canManageBranch, canEditHoldingData, canApproveRedemption } from './rbac';
 import type { Employee } from './types';
 
 const owner: Employee = { id: 'emp_owner', name: 'Owner', role: 'Owner', branchId: 'br_a', pin: '9999' };
@@ -28,5 +28,13 @@ describe('canEditHoldingData', () => {
     expect(canEditHoldingData(owner)).toBe(true);
     expect(canEditHoldingData(managerA)).toBe(false);
     expect(canEditHoldingData(kasir)).toBe(false);
+  });
+});
+
+describe('canApproveRedemption', () => {
+  it('true for Owner and BranchManager, false for Kasir', () => {
+    expect(canApproveRedemption(owner)).toBe(true);
+    expect(canApproveRedemption(managerA)).toBe(true);
+    expect(canApproveRedemption(kasir)).toBe(false);
   });
 });

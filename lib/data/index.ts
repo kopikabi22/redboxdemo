@@ -12,3 +12,5 @@ export * from './transactions';
 export * from './attendance';
 export * from './heldBills';
 export * from './closing';
+export * from './membership';
+export * from './membershipActivation';

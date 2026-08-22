@@ -19,6 +19,9 @@ export const StorageKeys = {
   attendance: `${STORAGE_PREFIX}attendance`,
   heldBills: `${STORAGE_PREFIX}held_bills`,
   cashierClosings: `${STORAGE_PREFIX}cashier_closings`,
+  loyaltyLedger: `${STORAGE_PREFIX}loyalty_ledger`,
+  rewardCatalog: `${STORAGE_PREFIX}reward_catalog`,
+  rewardRedemptions: `${STORAGE_PREFIX}reward_redemptions`,
   seeded: `${STORAGE_PREFIX}seeded_v1`,
 } as const;
 
