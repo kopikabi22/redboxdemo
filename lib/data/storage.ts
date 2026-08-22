@@ -18,6 +18,7 @@ export const StorageKeys = {
   cashMoves: `${STORAGE_PREFIX}cash_moves`,
   attendance: `${STORAGE_PREFIX}attendance`,
   heldBills: `${STORAGE_PREFIX}held_bills`,
+  cashierClosings: `${STORAGE_PREFIX}cashier_closings`,
   seeded: `${STORAGE_PREFIX}seeded_v1`,
 } as const;
 
@@ -83,8 +84,27 @@ export function generateId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
 
+let lastTimestampMs = 0;
+
+/**
+ * Strictly monotonically increasing — two calls within the same
+ * millisecond (routine when code runs synchronously back-to-back, e.g. two
+ * checkout() calls fired immediately one after another) never return equal
+ * values. This matters wherever timestamps are compared with strict `<`/`>`
+ * to define a boundary, such as CashierClosing's periodStart/periodEnd
+ * window: without this, a transaction created in the same millisecond as a
+ * closing's periodEnd could silently fall outside every window (neither
+ * closing counts it) or, with a differently-drawn boundary, get double
+ * counted. Nudging forward by 1ms on collision is imperceptible drift from
+ * wall-clock time and never goes backwards.
+ */
 export function nowIso(): string {
-  return new Date().toISOString();
+  let ms = Date.now();
+  if (ms <= lastTimestampMs) {
+    ms = lastTimestampMs + 1;
+  }
+  lastTimestampMs = ms;
+  return new Date(ms).toISOString();
 }
 
 export function todayDateString(): string {

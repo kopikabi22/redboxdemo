@@ -156,3 +156,32 @@ export interface HeldBill {
   items: TransactionLineItem[];
   savedAt: string;
 }
+
+export interface PaymentMethodBreakdown {
+  method: PaymentMethod;
+  expected: number;
+  actual: number;
+  variance: number;
+}
+
+/**
+ * End-of-shift reconciliation. Immutable once created — no update function
+ * exists, matching the "historical record" treatment given to Transaction
+ * pricing. `periodStart`/`periodEnd` bound the window of Transactions this
+ * closing reconciles; the next closing for the same cashier+branch starts
+ * where this one's `periodEnd` left off, which is how double-counting is
+ * prevented without mutating Transaction itself.
+ */
+export interface CashierClosing {
+  id: string;
+  branchId: string;
+  cashierId: string;
+  cashierName: string;
+  periodStart: string;
+  periodEnd: string;
+  breakdown: PaymentMethodBreakdown[];
+  totalExpected: number;
+  totalActual: number;
+  totalVariance: number;
+  createdAt: string;
+}
