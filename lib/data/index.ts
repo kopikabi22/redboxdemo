@@ -19,3 +19,4 @@ export * from './appointments';
 export * from './schedules';
 export * from './batches';
 export * from './reminders';
+export * from './purchasing';

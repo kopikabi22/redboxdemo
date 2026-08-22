@@ -27,6 +27,8 @@ export const StorageKeys = {
   schedules: `${STORAGE_PREFIX}schedules`,
   productBatches: `${STORAGE_PREFIX}product_batches`,
   reminderLogs: `${STORAGE_PREFIX}reminder_logs`,
+  suppliers: `${STORAGE_PREFIX}suppliers`,
+  purchaseOrders: `${STORAGE_PREFIX}purchase_orders`,
   seeded: `${STORAGE_PREFIX}seeded_v1`,
 } as const;
 

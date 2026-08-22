@@ -12,6 +12,14 @@ export function getProducts(): Product[] {
   return readCollection<Product>(StorageKeys.products);
 }
 
+export function getProductById(id: string): Product | undefined {
+  return getProducts().find((p) => p.id === id);
+}
+
+export function getServiceById(id: string): Service | undefined {
+  return getServices().find((s) => s.id === id);
+}
+
 export interface CreateServiceInput {
   name: string;
   category: string;

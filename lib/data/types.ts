@@ -421,3 +421,60 @@ export interface ReminderLog {
   actorName: string;
 }
 
+export type PurchaseOrderStatus = 'draft' | 'submitted' | 'approved' | 'received' | 'cancelled';
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email?: string;
+  address: string;
+  paymentTerms: string;
+  notes?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PurchaseOrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productSku: string;
+  qtyOrdered: number;
+  qtyReceived: number;
+  unitCost: number;
+  subtotal: number;
+  batchNumber?: string;
+  expiryDate?: string;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  poNumber: string; // e.g. "PO-202608-001"
+  branchId: string;
+  supplierId: string;
+  supplierName: string;
+  orderDate: string; // YYYY-MM-DD
+  expectedDate?: string; // YYYY-MM-DD
+  status: PurchaseOrderStatus;
+  items: PurchaseOrderItem[];
+  subtotal: number;
+  taxAmount: number;
+  totalAmount: number;
+  paymentTerms: string;
+  notes?: string;
+  cancellationReason?: string;
+  createdBy: string;
+  createdByName: string;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  receivedBy?: string;
+  receivedByName?: string;
+  receivedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
