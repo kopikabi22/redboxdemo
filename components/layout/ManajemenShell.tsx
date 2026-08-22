@@ -11,7 +11,8 @@ export interface ManajemenNavItem {
   href: string;
 }
 
-const NAV_ITEMS: ManajemenNavItem[] = [
+export const NAV_ITEMS: ManajemenNavItem[] = [
+  { id: "executive", label: "Executive Dashboard (BI)", href: "/manajemen/executive" },
   { id: "overview", label: "Ringkasan", href: "/manajemen" },
   { id: "branch", label: "Branch Management", href: "/manajemen/branch" },
   { id: "appointments", label: "Reservasi & Antrean", href: "/manajemen/appointments" },

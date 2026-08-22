@@ -773,3 +773,52 @@ export interface AuditLogRecord {
   metadata?: Record<string, unknown> | null;
 }
 
+export interface ExecutiveHoldingSummary {
+  periodMonth: string;
+  totalRevenue: number;
+  totalGrossProfit: number;
+  grossProfitMargin: number;
+  totalNetProfit: number;
+  netProfitMargin: number;
+  totalTransactions: number;
+  averageOrderValue: number; // AOV (Rp)
+  totalUniqueCustomers: number;
+  totalActiveMembers: number;
+  serviceRevenue: number;
+  productRevenue: number;
+  membershipRevenue: number;
+  totalDiscount: number;
+  totalCOGS: number;
+  totalOpex: number;
+}
+
+export interface BranchLeaderboardEntry {
+  branchId: string;
+  branchName: string;
+  city: string;
+  revenue: number;
+  revenueShare: number; // % terhadap total holding
+  transactions: number;
+  aov: number; // Average Order Value per cabang
+  netProfit: number;
+  netProfitMargin: number;
+  memberTransactionsCount: number;
+  memberRatio: number; // % transaksi dari member
+  rank: number;
+}
+
+export interface HourlyTrafficData {
+  hourLabel: string; // e.g. "09:00", "10:00", ..., "21:00"
+  hour: number; // 9, 10, ..., 21
+  transactionCount: number;
+  revenue: number;
+  isPeakHour: boolean;
+}
+
+export interface PaymentDistributionData {
+  method: PaymentMethod;
+  transactionCount: number;
+  totalAmount: number;
+  percentage: number;
+}
+
