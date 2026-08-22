@@ -1,6 +1,7 @@
 export * from './types';
 export * from './storage';
 export * from './seed';
+export * from './rbac';
 export * from './stock';
 export * from './branches';
 export * from './employees';
