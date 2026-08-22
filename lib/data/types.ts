@@ -611,3 +611,100 @@ export interface PayrollRecord {
   updatedAt: string;
 }
 
+export type ExpenseCategory =
+  | 'rent'
+  | 'utilities'
+  | 'supplies'
+  | 'maintenance'
+  | 'marketing'
+  | 'other';
+
+export interface ExpenseRecord {
+  id: string;
+  expenseNumber: string; // e.g. "EXP-202608-001"
+  branchId: string;
+  branchName: string;
+  category: ExpenseCategory;
+  amount: number;
+  date: string; // YYYY-MM-DD
+  notes: string;
+  recipientOrVendor?: string;
+  paymentMethod: PaymentMethod;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type APPaymentStatus = 'unpaid' | 'partial' | 'paid';
+
+export interface APPaymentInstallment {
+  id: string;
+  paymentNumber: string; // e.g. "PAY-AP-202608-001"
+  date: string; // YYYY-MM-DD
+  amount: number;
+  paymentMethod: 'Transfer' | 'Cash' | 'Debit';
+  bankReference?: string;
+  notes?: string;
+  paidBy: string;
+  paidByName: string;
+  createdAt: string;
+}
+
+export interface AccountsPayableRecord {
+  id: string;
+  poId: string;
+  poNumber: string;
+  supplierId: string;
+  supplierName: string;
+  branchId: string;
+  branchName: string;
+  orderDate: string;
+  receivedDate: string;
+  dueDate: string;
+  totalAmount: number;
+  paidAmount: number;
+  remainingBalance: number;
+  status: APPaymentStatus;
+  payments: APPaymentInstallment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProfitAndLossReport {
+  branchId: string | null;
+  branchName: string;
+  periodMonth: string; // "YYYY-MM"
+  serviceRevenue: number;
+  productRevenue: number;
+  membershipRevenue: number;
+  totalDiscount: number;
+  totalRevenue: number;
+  cogs: number;
+  grossProfit: number;
+  grossProfitMargin: number;
+  operationalExpenses: number;
+  expensesByCategory: Record<ExpenseCategory, number>;
+  payrollExpenses: number;
+  totalOpex: number;
+  netProfit: number;
+  netProfitMargin: number;
+  transactionCount: number;
+}
+
+export interface CashFlowReport {
+  branchId: string | null;
+  branchName: string;
+  periodMonth: string;
+  posCashInflow: number;
+  posDigitalInflow: number;
+  manualCashIn: number;
+  totalInflow: number;
+  expenseOutflow: number;
+  apPaymentOutflow: number;
+  payrollPaidOutflow: number;
+  manualCashOut: number;
+  totalOutflow: number;
+  netCashFlow: number;
+}
+

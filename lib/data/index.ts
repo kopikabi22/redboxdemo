@@ -22,3 +22,4 @@ export * from './reminders';
 export * from './purchasing';
 export * from './stockOps';
 export * from './payroll';
+export * from './finance';

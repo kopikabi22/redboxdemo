@@ -29,6 +29,9 @@ const NAV_ITEMS: ManajemenNavItem[] = [
   { id: "schedules", label: "Jadwal Kerja (Roster)", href: "/manajemen/schedules" },
   { id: "payroll", label: "Payroll & Komisi", href: "/manajemen/hr/payroll" },
   { id: "advances", label: "Kasbon Karyawan", href: "/manajemen/hr/advances" },
+  { id: "finance_pnl", label: "Laba Rugi (P&L)", href: "/manajemen/finance/pnl" },
+  { id: "finance_expenses", label: "Beban Operasional", href: "/manajemen/finance/expenses" },
+  { id: "finance_ap", label: "Hutang Dagang (AP)", href: "/manajemen/finance/ap" },
 ];
 
 interface ManajemenShellProps {
