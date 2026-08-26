@@ -5,7 +5,7 @@ import type { Branch, Employee, EmployeeRole } from './types';
 const PIN_PATTERN = /^\d{4}$/;
 
 /** Roles that grant POV Manajemen access — assigning either is Owner/HQ-only. */
-const ELEVATED_ROLES: EmployeeRole[] = ['BranchManager', 'Owner'];
+const ELEVATED_ROLES: EmployeeRole[] = ['BranchManager', 'Owner', 'Finance', 'Admin'];
 
 export function getEmployees(): Employee[] {
   return readCollection<Employee>(StorageKeys.employees);

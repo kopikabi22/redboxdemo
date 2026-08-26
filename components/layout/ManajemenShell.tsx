@@ -223,7 +223,7 @@ export function ManajemenShell({
         <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3.5 border-b border-border bg-bg-raised px-6 py-3.5">
           <div className="font-display text-[22px] tracking-wide">{pageTitle}</div>
           <div className="flex items-center gap-2.5">
-            {employee.role === "Owner" ? (
+            {employee.role === "Owner" || employee.role === "Finance" || employee.role === "Admin" ? (
               <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-gold-bright">
                 <select
                   value={selectedBranchId}
@@ -244,7 +244,7 @@ export function ManajemenShell({
             )}
             <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-text-muted">
               <span className="inline-block h-5 w-5 rounded-full bg-red" />
-              {employee.name} · {employee.role === "Owner" ? "Owner/HQ" : "Branch Manager"}
+              {employee.name} · {employee.role === "Owner" ? "Owner/HQ" : employee.role === "Finance" ? "Finance" : employee.role === "Admin" ? "Admin" : "Branch Manager"}
             </div>
           </div>
         </header>

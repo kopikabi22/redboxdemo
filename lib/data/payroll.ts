@@ -99,7 +99,7 @@ export function createEmployeeAdvance(
 }
 
 export function approveEmployeeAdvance(id: string, actor: Employee): EmployeeAdvance {
-  const allowedRoles = ['Owner', 'BranchManager'];
+  const allowedRoles = ['Owner', 'BranchManager', 'Finance', 'Admin'];
   if (!allowedRoles.includes(actor.role)) {
     throw new Error('Akses ditolak: role tidak berhak menyetujui pengajuan kasbon.');
   }
@@ -127,7 +127,7 @@ export function approveEmployeeAdvance(id: string, actor: Employee): EmployeeAdv
 }
 
 export function rejectEmployeeAdvance(id: string, actor: Employee): EmployeeAdvance {
-  const allowedRoles = ['Owner', 'BranchManager'];
+  const allowedRoles = ['Owner', 'BranchManager', 'Finance', 'Admin'];
   if (!allowedRoles.includes(actor.role)) {
     throw new Error('Akses ditolak: role tidak berhak menolak pengajuan kasbon.');
   }
@@ -339,7 +339,7 @@ export function generateMonthlyPayroll(
 }
 
 export function approvePayrollRecord(id: string, actor: Employee): PayrollRecord {
-  const allowedRoles = ['Owner', 'BranchManager'];
+  const allowedRoles = ['Owner', 'BranchManager', 'Finance', 'Admin'];
   if (!allowedRoles.includes(actor.role)) {
     throw new Error('Akses ditolak: role tidak memiliki wewenang menyetujui payroll.');
   }
@@ -367,7 +367,7 @@ export function approvePayrollRecord(id: string, actor: Employee): PayrollRecord
 }
 
 export function markPayrollPaid(id: string, actor: Employee): PayrollRecord {
-  const allowedRoles = ['Owner', 'BranchManager'];
+  const allowedRoles = ['Owner', 'BranchManager', 'Finance', 'Admin'];
   if (!allowedRoles.includes(actor.role)) {
     throw new Error('Akses ditolak: role tidak memiliki wewenang mencairkan pembayaran payroll.');
   }

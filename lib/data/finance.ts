@@ -55,7 +55,7 @@ export interface CreateExpenseInput {
 }
 
 export function createExpense(input: CreateExpenseInput, actor: Employee): ExpenseRecord {
-  const allowedRoles = ['Owner', 'BranchManager'];
+  const allowedRoles = ['Owner', 'BranchManager', 'Finance', 'Admin'];
   if (!allowedRoles.includes(actor.role)) {
     throw new Error('Akses ditolak: role tidak memiliki wewenang mencatat beban operasional.');
   }
@@ -100,7 +100,7 @@ export function createExpense(input: CreateExpenseInput, actor: Employee): Expen
 }
 
 export function deleteExpense(id: string, actor: Employee): boolean {
-  const allowedRoles = ['Owner', 'BranchManager'];
+  const allowedRoles = ['Owner', 'BranchManager', 'Finance', 'Admin'];
   if (!allowedRoles.includes(actor.role)) {
     throw new Error('Akses ditolak: role tidak memiliki wewenang menghapus beban operasional.');
   }
@@ -209,7 +209,7 @@ export function recordAPPayment(
   input: RecordAPPaymentInput,
   actor: Employee,
 ): AccountsPayableRecord {
-  const allowedRoles = ['Owner', 'BranchManager'];
+  const allowedRoles = ['Owner', 'BranchManager', 'Finance', 'Admin'];
   if (!allowedRoles.includes(actor.role)) {
     throw new Error('Akses ditolak: role tidak memiliki wewenang mencatat pembayaran hutang dagang.');
   }

@@ -4,7 +4,7 @@
  * shape (see storage.ts) mirrors these 1:1 (JSON.stringify of these types).
  */
 
-export type EmployeeRole = 'Kasir' | 'Barber' | 'BranchManager' | 'Owner';
+export type EmployeeRole = 'Kasir' | 'Barber' | 'BranchManager' | 'Owner' | 'Finance' | 'Admin';
 
 export interface Branch {
   id: string;

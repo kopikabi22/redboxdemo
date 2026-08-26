@@ -36,8 +36,8 @@ export interface SetBranchTargetInput {
 }
 
 export function setBranchTarget(input: SetBranchTargetInput, actor: Employee): BranchTarget {
-  if (actor.role !== 'Owner') {
-    throw new Error('Akses ditolak: hanya Owner yang berhak menetapkan target performa cabang.');
+  if (actor.role !== 'Owner' && actor.role !== 'Admin') {
+    throw new Error('Akses ditolak: hanya Owner dan Admin yang berhak menetapkan target performa cabang.');
   }
 
   const branch = getBranchById(input.branchId);

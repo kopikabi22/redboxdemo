@@ -1,4 +1,4 @@
-import { StorageKeys, readValue, writeCollection, writeValue } from './storage';
+import { StorageKeys, readCollection, readValue, writeCollection, writeValue } from './storage';
 import { recordStockMove } from './stock';
 import type { Branch, Employee, Customer, Service, Product } from './types';
 
@@ -15,8 +15,9 @@ const employees: Employee[] = [
   { id: 'emp_rio', name: 'Rio Saputra', role: 'Barber', branchId: 'br_bypass', pin: '2222' },
   { id: 'emp_fajar', name: 'Fajar Ramadhan', role: 'Barber', branchId: 'br_samadikun', pin: '3333' },
   { id: 'emp_nita', name: 'Nita Amelia', role: 'Kasir', branchId: 'br_samadikun', pin: '4444' },
-  { id: 'emp_manager_bypass', name: 'Yusuf Hidayat', role: 'BranchManager', branchId: 'br_bypass', pin: '5555' },
-  { id: 'emp_owner', name: 'Bpk. Herman (Owner)', role: 'Owner', branchId: 'br_bypass', pin: '9999' },
+  { id: 'emp_gunawan', name: 'Gunawan', role: 'Owner', branchId: 'br_bypass', pin: '9999' },
+  { id: 'emp_reval', name: 'Reval', role: 'Finance', branchId: 'br_bypass', pin: '7777' },
+  { id: 'emp_zainal', name: 'Zainal', role: 'Admin', branchId: 'br_bypass', pin: '5555' },
 ];
 
 const customers: Customer[] = [
@@ -53,7 +54,27 @@ const products: Product[] = [
  * no-ops outside the browser).
  */
 export function ensureSeedData(): void {
-  if (readValue(StorageKeys.seeded, false)) return;
+  if (readValue(StorageKeys.seeded, false)) {
+    const existingEmployees = readCollection<Employee>(StorageKeys.employees);
+    const managementUsers = employees.filter((e) => ['Owner', 'Finance', 'Admin'].includes(e.role));
+    let hasMissing = false;
+    for (const mgmt of managementUsers) {
+      if (!existingEmployees.some((e) => e.name.toLowerCase() === mgmt.name.toLowerCase())) {
+        hasMissing = true;
+      }
+    }
+    const hasOldUsers = existingEmployees.some((e) => e.id === 'emp_owner' || e.id === 'emp_manager_bypass');
+    if (hasMissing || hasOldUsers) {
+      const updated = existingEmployees.filter((e) => e.id !== 'emp_owner' && e.id !== 'emp_manager_bypass');
+      for (const mgmt of managementUsers) {
+        if (!updated.some((e) => e.name.toLowerCase() === mgmt.name.toLowerCase())) {
+          updated.push(mgmt);
+        }
+      }
+      writeCollection(StorageKeys.employees, updated);
+    }
+    return;
+  }
 
   writeCollection(StorageKeys.branches, branches);
   writeCollection(StorageKeys.employees, employees);

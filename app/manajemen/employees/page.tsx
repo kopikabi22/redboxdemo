@@ -20,14 +20,16 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
-const ALL_ROLES: EmployeeRole[] = ["Kasir", "Barber", "BranchManager", "Owner"];
-/** Roles a BranchManager is allowed to assign — BranchManager/Owner stay Owner/HQ-only, matching employees.ts's role-escalation guard. */
+const ALL_ROLES: EmployeeRole[] = ["Kasir", "Barber", "BranchManager", "Owner", "Finance", "Admin"];
+/** Roles a BranchManager is allowed to assign — elevated roles stay Owner/HQ-only, matching employees.ts's role-escalation guard. */
 const ASSIGNABLE_ROLES_FOR_BRANCH_MANAGER: EmployeeRole[] = ["Kasir", "Barber"];
 const ROLE_LABEL: Record<EmployeeRole, string> = {
   Kasir: "Kasir",
   Barber: "Barber",
   BranchManager: "Branch Manager",
   Owner: "Owner/HQ",
+  Finance: "Finance",
+  Admin: "Admin",
 };
 
 interface EmployeeFormState {
