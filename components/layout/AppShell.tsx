@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import type { Branch, Employee, EmployeeRole } from "@/lib/data";
 import { Button } from "@/components/ui/Button";
@@ -60,10 +61,7 @@ export function AppShell({ employee, branch, pageTitle, navItems, activeNavId, o
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-[240px_1fr]">
       <aside className="flex flex-col border-r border-border bg-bg-raised md:sticky md:top-0 md:h-screen">
         <div className="border-b border-border px-4 pb-3 pt-5">
-          <div className="flex items-center gap-2 font-display text-2xl tracking-wide">
-            <span className="inline-block h-3 w-3 bg-red" style={{ boxShadow: "3px 3px 0 var(--gold)" }} />
-            REDBOX
-          </div>
+          <Image src="/logo-redbox.png" alt="RedBox Logo" width={140} height={45} className="object-contain" />
           <div className="mt-1 text-[10px] uppercase tracking-wide text-text-faint">POV Karyawan</div>
         </div>
         <nav className="flex-1 overflow-y-auto p-2.5">

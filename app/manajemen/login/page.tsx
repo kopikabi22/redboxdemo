@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   getEmployeesByRoles,
   getBranchById,
@@ -78,9 +79,8 @@ export default function ManajemenLoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-6 py-10">
-      <div className="mb-1 flex items-center gap-2.5 font-display text-5xl tracking-wide">
-        <span className="inline-block h-5 w-5 bg-red" style={{ boxShadow: "4px 4px 0 var(--gold)" }} />
-        REDBOX ERP
+      <div className="flex justify-center mb-6">
+        <Image src="/logo-redbox.png" alt="RedBox Logo" width={240} height={80} className="object-contain" priority />
       </div>
       <div className="mb-8 font-accent italic text-text-faint">POV Manajemen · Back Office — pilih akun Anda</div>
 
