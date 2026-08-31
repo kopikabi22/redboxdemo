@@ -11,6 +11,7 @@ import {
   formatRupiah,
   todayDateString,
 } from "@/lib/data";
+import { dummyPnL } from "@/lib/data/dummy";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
 import { ManajemenShell } from "@/components/layout/ManajemenShell";
@@ -72,29 +73,29 @@ export default function ManajemenPnLPage() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="rounded-lg border border-border bg-surface p-3.5">
             <div className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Total Revenue (Omzet)</div>
-            <div className="mt-1 text-2xl font-bold text-gold-bright">{formatRupiah(pnlReport.totalRevenue)}</div>
-            <div className="text-[11px] text-text-faint">{pnlReport.transactionCount} transaksi di {periodMonth}</div>
+            <div className="mt-1 text-2xl font-bold text-gold-bright">{formatRupiah(dummyPnL.revenue)}</div>
+            <div className="text-[11px] text-text-faint">{dummyPnL.transaksi} transaksi di {periodMonth}</div>
           </div>
 
           <div className="rounded-lg border border-border bg-surface p-3.5">
             <div className="text-[11px] font-bold uppercase tracking-wider text-ok">Laba Kotor (Gross Profit)</div>
-            <div className="mt-1 text-2xl font-bold text-ok">{formatRupiah(pnlReport.grossProfit)}</div>
-            <div className="text-[11px] text-ok">Margin: {pnlReport.grossProfitMargin.toFixed(1)}%</div>
+            <div className="mt-1 text-2xl font-bold text-ok">{formatRupiah(dummyPnL.grossProfit)}</div>
+            <div className="text-[11px] text-ok">Margin: {dummyPnL.margin}</div>
           </div>
 
           <div className="rounded-lg border border-border bg-surface p-3.5">
             <div className="text-[11px] font-bold uppercase tracking-wider text-danger">Total OPEX (Beban Operasional)</div>
-            <div className="mt-1 text-2xl font-bold text-danger">{formatRupiah(pnlReport.totalOpex)}</div>
+            <div className="mt-1 text-2xl font-bold text-danger">{formatRupiah(dummyPnL.opex)}</div>
             <div className="text-[11px] text-text-faint">Expense + Beban Payroll</div>
           </div>
 
           <div className="rounded-lg border border-border bg-surface p-3.5">
             <div className="text-[11px] font-bold uppercase tracking-wider text-text">Laba Bersih (Net Profit)</div>
-            <div className={`mt-1 text-2xl font-black ${isSurplus ? "text-gold-bright" : "text-danger"}`}>
-              {formatRupiah(pnlReport.netProfit)}
+            <div className={`mt-1 text-2xl font-black ${dummyPnL.netProfit >= 0 ? "text-gold-bright" : "text-danger"}`}>
+              {formatRupiah(dummyPnL.netProfit)}
             </div>
-            <div className={`text-[11px] font-semibold ${isSurplus ? "text-gold-bright" : "text-danger"}`}>
-              Margin Bersih: {pnlReport.netProfitMargin.toFixed(1)}%
+            <div className={`text-[11px] font-semibold ${dummyPnL.netProfit >= 0 ? "text-gold-bright" : "text-danger"}`}>
+              Margin Bersih: {dummyPnL.margin}
             </div>
           </div>
         </div>
@@ -170,23 +171,23 @@ export default function ManajemenPnLPage() {
                 <div className="space-y-1 divide-y divide-border/40 rounded border border-border bg-surface-2 p-3">
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Penjualan Jasa Haircut &amp; Treatment</span>
-                    <span className="font-mono text-text">{formatRupiah(pnlReport.serviceRevenue)}</span>
+                    <span className="font-mono text-text">{formatRupiah(150000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Penjualan Produk Retail POS</span>
-                    <span className="font-mono text-text">{formatRupiah(pnlReport.productRevenue)}</span>
+                    <span className="font-mono text-text">{formatRupiah(30000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Pendaftaran &amp; Aktivasi Member Baru</span>
-                    <span className="font-mono text-text">{formatRupiah(pnlReport.membershipRevenue)}</span>
+                    <span className="font-mono text-text">{formatRupiah(10000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Potongan Diskon Promosi &amp; Voucher</span>
-                    <span className="font-mono text-danger">-{formatRupiah(pnlReport.totalDiscount)}</span>
+                    <span className="font-mono text-danger">-{formatRupiah(4500000)}</span>
                   </div>
                   <div className="flex justify-between pt-2 font-bold text-text">
                     <span>Total Pendapatan Bersih (Net Revenue)</span>
-                    <span className="font-mono text-gold-bright">{formatRupiah(pnlReport.totalRevenue)}</span>
+                    <span className="font-mono text-gold-bright">{formatRupiah(dummyPnL.revenue)}</span>
                   </div>
                 </div>
               </div>
@@ -199,11 +200,11 @@ export default function ManajemenPnLPage() {
                 <div className="space-y-1 divide-y divide-border/40 rounded border border-border bg-surface-2 p-3">
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Modal Pokok Barang Retail Terjual</span>
-                    <span className="font-mono text-danger">-{formatRupiah(pnlReport.cogs)}</span>
+                    <span className="font-mono text-danger">-{formatRupiah(dummyPnL.cogs)}</span>
                   </div>
                   <div className="flex justify-between pt-2 font-bold text-ok">
                     <span>Laba Kotor (Gross Profit)</span>
-                    <span className="font-mono">{formatRupiah(pnlReport.grossProfit)} ({pnlReport.grossProfitMargin.toFixed(1)}%)</span>
+                    <span className="font-mono">{formatRupiah(dummyPnL.grossProfit)} ({dummyPnL.margin})</span>
                   </div>
                 </div>
               </div>
@@ -216,42 +217,42 @@ export default function ManajemenPnLPage() {
                 <div className="space-y-1 divide-y divide-border/40 rounded border border-border bg-surface-2 p-3">
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Beban Sewa Tempat &amp; Gedung</span>
-                    <span className="font-mono text-text">{formatRupiah(pnlReport.expensesByCategory.rent)}</span>
+                    <span className="font-mono text-text">{formatRupiah(10000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Beban Listrik, Air &amp; Internet</span>
-                    <span className="font-mono text-text">{formatRupiah(pnlReport.expensesByCategory.utilities)}</span>
+                    <span className="font-mono text-text">{formatRupiah(2000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Beban Perlengkapan &amp; Kebersihan</span>
-                    <span className="font-mono text-text">{formatRupiah(pnlReport.expensesByCategory.supplies)}</span>
+                    <span className="font-mono text-text">{formatRupiah(1000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Beban Maintenance &amp; Perawatan Alat</span>
-                    <span className="font-mono text-text">{formatRupiah(pnlReport.expensesByCategory.maintenance)}</span>
+                    <span className="font-mono text-text">{formatRupiah(500000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Beban Marketing &amp; Promosi</span>
-                    <span className="font-mono text-text">{formatRupiah(pnlReport.expensesByCategory.marketing)}</span>
+                    <span className="font-mono text-text">{formatRupiah(1500000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Beban Operasional Lainnya</span>
-                    <span className="font-mono text-text">{formatRupiah(pnlReport.expensesByCategory.other)}</span>
+                    <span className="font-mono text-text">{formatRupiah(1000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1 font-semibold text-text">
                     <span>Beban Gaji Pokok &amp; Komisi Karyawan (Payroll)</span>
-                    <span className="font-mono text-danger">-{formatRupiah(pnlReport.payrollExpenses)}</span>
+                    <span className="font-mono text-danger">-{formatRupiah(19000000)}</span>
                   </div>
                   <div className="flex justify-between pt-2 font-bold text-danger">
                     <span>Total Beban Operasional (OPEX)</span>
-                    <span className="font-mono">-{formatRupiah(pnlReport.totalOpex)}</span>
+                    <span className="font-mono">-{formatRupiah(dummyPnL.opex)}</span>
                   </div>
                 </div>
               </div>
 
               {/* 4. Net Profit */}
               <div className={`rounded-lg border p-4 text-center ${
-                isSurplus
+                dummyPnL.netProfit >= 0
                   ? "border-gold-bright/40 bg-gold-bright/10"
                   : "border-danger/40 bg-danger/10"
               }`}>
@@ -259,12 +260,12 @@ export default function ManajemenPnLPage() {
                   LABA BERSIH OPERASIONAL (NET PROFIT)
                 </div>
                 <div className={`mt-1 font-mono text-3xl font-black ${
-                  isSurplus ? "text-gold-bright" : "text-danger"
+                  dummyPnL.netProfit >= 0 ? "text-gold-bright" : "text-danger"
                 }`}>
-                  {formatRupiah(pnlReport.netProfit)}
+                  {formatRupiah(dummyPnL.netProfit)}
                 </div>
                 <div className="mt-1 text-xs font-semibold text-text-muted">
-                  Margin Laba Bersih: <span className={isSurplus ? "text-gold-bright" : "text-danger"}>{pnlReport.netProfitMargin.toFixed(1)}%</span>
+                  Margin Laba Bersih: <span className={dummyPnL.netProfit >= 0 ? "text-gold-bright" : "text-danger"}>{dummyPnL.margin}</span>
                 </div>
               </div>
             </div>

@@ -155,3 +155,22 @@ export const dummyKasbon = [
   { id: "KSB-08-01", tanggal: "2026-08-15", karyawan: "Fajar", cabang: "Samadikun", nominal: 500000, alasan: "Biaya sekolah anak", status: "Disetujui" },
   { id: "KSB-08-02", tanggal: "2026-08-30", karyawan: "Rio", cabang: "Bypass", nominal: 300000, alasan: "Keperluan mendesak keluarga", status: "Menunggu Persetujuan" }
 ];
+
+export const dummyExecutiveSummary = {
+  omzet: 185500000,
+  labaBersih: 125500000,
+  transaksi: 842,
+  aov: 220308,
+  memberAktif: 450,
+  memberPct: "65%"
+};
+
+export const dummyPnL = {
+  revenue: 185500000,
+  transaksi: 842,
+  cogs: 25000000,
+  grossProfit: 160500000,
+  opex: 35000000,
+  netProfit: 125500000,
+  margin: "67.6%"
+};

@@ -13,6 +13,7 @@ import {
   formatRupiah,
   todayDateString,
 } from "@/lib/data";
+import { dummyExecutiveSummary, dummyPnL } from "@/lib/data/dummy";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
 import { ManajemenShell } from "@/components/layout/ManajemenShell";
@@ -122,11 +123,11 @@ export default function ManajemenExecutivePage() {
               Holding Net Revenue (Omzet)
             </div>
             <div className="mt-1 font-mono text-2xl font-black text-gold-bright">
-              {formatRupiah(summary.totalRevenue)}
+              {formatRupiah(dummyExecutiveSummary.omzet)}
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
-              <span>Laba Kotor: {formatRupiah(summary.totalGrossProfit)}</span>
-              <span className="font-semibold text-ok">{summary.grossProfitMargin.toFixed(1)}%</span>
+              <span>Laba Kotor: {formatRupiah(dummyPnL.grossProfit)}</span>
+              <span className="font-semibold text-ok">{dummyPnL.margin}</span>
             </div>
           </div>
 
@@ -135,13 +136,13 @@ export default function ManajemenExecutivePage() {
             <div className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
               Laba Bersih Konsolidasi
             </div>
-            <div className={`mt-1 font-mono text-2xl font-black ${isProfitPositive ? "text-ok" : "text-danger"}`}>
-              {formatRupiah(summary.totalNetProfit)}
+            <div className={`mt-1 font-mono text-2xl font-black text-ok`}>
+              {formatRupiah(dummyExecutiveSummary.labaBersih)}
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Net Margin:</span>
-              <span className={`font-bold ${isProfitPositive ? "text-ok" : "text-danger"}`}>
-                {summary.netProfitMargin.toFixed(1)}%
+              <span className={`font-bold text-ok`}>
+                67.6%
               </span>
             </div>
           </div>
@@ -152,11 +153,11 @@ export default function ManajemenExecutivePage() {
               Transaksi &amp; Nilai Rata-rata
             </div>
             <div className="mt-1 font-mono text-2xl font-black text-text">
-              {summary.totalTransactions} <span className="text-xs font-normal text-text-muted">transaksi</span>
+              {dummyExecutiveSummary.transaksi} <span className="text-xs font-normal text-text-muted">transaksi</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Rata-rata / AOV:</span>
-              <span className="font-mono font-bold text-gold-bright">{formatRupiah(summary.averageOrderValue)}</span>
+              <span className="font-mono font-bold text-gold-bright">{formatRupiah(dummyExecutiveSummary.aov)}</span>
             </div>
           </div>
 
@@ -166,16 +167,12 @@ export default function ManajemenExecutivePage() {
               Pelanggan &amp; Member Aktif
             </div>
             <div className="mt-1 font-mono text-2xl font-black text-text">
-              {summary.totalUniqueCustomers} <span className="text-xs font-normal text-text-muted">konsumen</span>
+              {Math.round(dummyExecutiveSummary.memberAktif / 0.65)} <span className="text-xs font-normal text-text-muted">konsumen</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Member Terdaftar:</span>
               <span className="font-bold text-gold-bright">
-                {summary.totalActiveMembers} (
-                {summary.totalUniqueCustomers > 0
-                  ? ((summary.totalActiveMembers / summary.totalUniqueCustomers) * 100).toFixed(0)
-                  : 0}
-                %)
+                {dummyExecutiveSummary.memberAktif} ({dummyExecutiveSummary.memberPct})
               </span>
             </div>
           </div>
