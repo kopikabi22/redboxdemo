@@ -7,6 +7,8 @@ import { useIsClient } from "@/lib/hooks/useIsClient";
 import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
 import { ManajemenShell } from "@/components/layout/ManajemenShell";
 
+import { dummyRingkasan } from "@/lib/data/dummy";
+
 export default function ManajemenOverviewPage() {
   const router = useRouter();
   const isClient = useIsClient();
@@ -29,12 +31,6 @@ export default function ManajemenOverviewPage() {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;
   }
 
-  const employees = getEmployees();
-  const branchEmployeeCount = employees.filter((e) => e.branchId === selectedBranchId).length;
-  const customers = getCustomers();
-  const services = getServices();
-  const products = getProducts();
-
   return (
     <ManajemenShell
       employee={session}
@@ -49,12 +45,20 @@ export default function ManajemenOverviewPage() {
       <div className="mb-5 font-display text-3xl tracking-wide">Ringkasan Operasional</div>
 
       <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
-        <StatCard label="Cabang" value={branches.length} />
-        <StatCard label="Karyawan (total)" value={employees.length} />
-        <StatCard label={`Karyawan — cabang terpilih`} value={branchEmployeeCount} />
-        <StatCard label="Customer Terdaftar" value={customers.length} />
-        <StatCard label="Layanan" value={services.length} />
-        <StatCard label="SKU Produk" value={products.length} />
+        <StatCard label="Pendapatan Bulan Ini" value={`Rp ${dummyRingkasan.pendapatanBulanIni.toLocaleString("id-ID")}`} />
+        <StatCard label="Total Reservasi" value={dummyRingkasan.totalReservasi} />
+        <StatCard label="Pelanggan Baru" value={dummyRingkasan.pelangganBaru} />
+      </div>
+
+      <h3 className="mt-6 mb-3 font-display text-xl text-gold-bright">Performa Cabang</h3>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {dummyRingkasan.performaCabang.map((c, i) => (
+          <div key={i} className="rounded-lg border border-border bg-surface p-4">
+            <h4 className="font-bold text-lg">{c.cabang}</h4>
+            <div className="mt-2 text-sm text-text-muted">Omset: Rp {c.omset.toLocaleString("id-ID")}</div>
+            <div className="text-sm text-text-muted">Transaksi: {c.transaksi}</div>
+          </div>
+        ))}
       </div>
 
       <div className="mt-5 text-xs text-text-faint">
@@ -64,7 +68,7 @@ export default function ManajemenOverviewPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
       <div className="font-display text-3xl text-gold-bright">{value}</div>

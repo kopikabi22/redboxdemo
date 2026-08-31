@@ -1,8 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
   getEmployeesByRoles,
   getBranchById,
@@ -82,8 +82,6 @@ export default function ManajemenLoginPage() {
       <div className="flex justify-center mb-6">
         <Image src="/logo-redbox.png" alt="RedBox Logo" width={240} height={80} className="object-contain" priority />
       </div>
-      <div className="mb-8 font-accent italic text-text-faint">POV Manajemen · Back Office — pilih akun Anda</div>
-
       {/* Dropdown Selector */}
       <div className="mb-6 w-full max-w-md rounded-xl border border-border/70 bg-surface/60 p-4 shadow-lg backdrop-blur-sm">
         <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-text-muted">
