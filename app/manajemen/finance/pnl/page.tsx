@@ -6,8 +6,6 @@ import {
   getSessionEmployee,
   clearSession,
   getBranches,
-  generateProfitAndLossReport,
-  generateCashFlowReport,
   formatRupiah,
   todayDateString,
 } from "@/lib/data";
@@ -42,21 +40,11 @@ export default function ManajemenPnLPage() {
     router.replace("/login");
   }
 
-  const pnlReport = useMemo(() => {
-    if (!isClient) return null;
-    return generateProfitAndLossReport(selectedBranchId || undefined, periodMonth);
-  }, [isClient, selectedBranchId, periodMonth]);
-
-  const cfReport = useMemo(() => {
-    if (!isClient) return null;
-    return generateCashFlowReport(selectedBranchId || undefined, periodMonth);
-  }, [isClient, selectedBranchId, periodMonth]);
-
-  if (!employee || !pnlReport || !cfReport) {
+  if (!employee) {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;
   }
 
-  const isSurplus = pnlReport.netProfit >= 0;
+  const isSurplus = dummyPnL.netProfit >= 0;
 
   return (
     <ManajemenShell
@@ -148,7 +136,7 @@ export default function ManajemenPnLPage() {
                   <div className="font-heading text-xl tracking-wider text-gold-bright">REDBOX BARBERSHOP</div>
                   <div className="text-sm font-bold text-text">LAPORAN LABA RUGI OPERASIONAL (P&amp;L)</div>
                   <div className="text-[11px] text-text-faint">
-                    Cabang: <span className="font-semibold text-text">{pnlReport.branchName}</span> · Periode: {pnlReport.periodMonth}
+                    Cabang: <span className="font-semibold text-text">{selectedBranchId ? branches.find(b => b.id === selectedBranchId)?.name : "Konsolidasi Semua Cabang"}</span> · Periode: {periodMonth}
                   </div>
                 </div>
                 <div className="text-right">
@@ -279,7 +267,7 @@ export default function ManajemenPnLPage() {
               <div className="font-heading text-xl tracking-wider text-gold-bright">REDBOX BARBERSHOP</div>
               <div className="text-sm font-bold text-text">LAPORAN ARUS KAS MASUK &amp; KELUAR (CASH FLOW)</div>
               <div className="text-[11px] text-text-faint">
-                Cabang: <span className="font-semibold text-text">{cfReport.branchName}</span> · Periode: {cfReport.periodMonth}
+                Cabang: <span className="font-semibold text-text">{selectedBranchId ? branches.find(b => b.id === selectedBranchId)?.name : "Konsolidasi Semua Cabang"}</span> · Periode: {periodMonth}
               </div>
             </div>
 
@@ -292,19 +280,19 @@ export default function ManajemenPnLPage() {
                 <div className="space-y-1.5 divide-y divide-border/60">
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Penerimaan Kasir POS (Tunai / Cash)</span>
-                    <span className="font-mono font-medium text-text">{formatRupiah(cfReport.posCashInflow)}</span>
+                    <span className="font-mono font-medium text-text">{formatRupiah(55000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Penerimaan Kasir Digital (QRIS, Debit, Transfer)</span>
-                    <span className="font-mono font-medium text-text">{formatRupiah(cfReport.posDigitalInflow)}</span>
+                    <span className="font-mono font-medium text-text">{formatRupiah(130500000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Modal / Setoran Kas Masuk Manual</span>
-                    <span className="font-mono font-medium text-text">{formatRupiah(cfReport.manualCashIn)}</span>
+                    <span className="font-mono font-medium text-text">{formatRupiah(5000000)}</span>
                   </div>
                   <div className="flex justify-between pt-2 font-bold text-ok">
                     <span>Total Kas Masuk</span>
-                    <span className="font-mono text-ok">{formatRupiah(cfReport.totalInflow)}</span>
+                    <span className="font-mono text-ok">{formatRupiah(190500000)}</span>
                   </div>
                 </div>
               </div>
@@ -317,41 +305,35 @@ export default function ManajemenPnLPage() {
                 <div className="space-y-1.5 divide-y divide-border/60">
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Pengeluaran Beban Operasional (Expenses)</span>
-                    <span className="font-mono font-medium text-text">{formatRupiah(cfReport.expenseOutflow)}</span>
+                    <span className="font-mono font-medium text-text">{formatRupiah(16000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Pembayaran Hutang Supplier (AP)</span>
-                    <span className="font-mono font-medium text-text">{formatRupiah(cfReport.apPaymentOutflow)}</span>
+                    <span className="font-mono font-medium text-text">{formatRupiah(14500000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Pencairan Gaji &amp; Komisi Karyawan (Paid)</span>
-                    <span className="font-mono font-medium text-text">{formatRupiah(cfReport.payrollPaidOutflow)}</span>
+                    <span className="font-mono font-medium text-text">{formatRupiah(19000000)}</span>
                   </div>
                   <div className="flex justify-between pt-1">
                     <span className="text-text-muted">Pengeluaran Kas Kecil Manual</span>
-                    <span className="font-mono font-medium text-text">{formatRupiah(cfReport.manualCashOut)}</span>
+                    <span className="font-mono font-medium text-text">{formatRupiah(1500000)}</span>
                   </div>
                   <div className="flex justify-between pt-2 font-bold text-danger">
                     <span>Total Kas Keluar</span>
-                    <span className="font-mono text-danger">-{formatRupiah(cfReport.totalOutflow)}</span>
+                    <span className="font-mono text-danger">-{formatRupiah(51000000)}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Net Cash Flow Box */}
-            <div className={`mt-4 rounded-lg border p-4 text-center ${
-              cfReport.netCashFlow >= 0
-                ? "border-ok/40 bg-ok/10"
-                : "border-danger/40 bg-danger/10"
-            }`}>
+            <div className={`mt-4 rounded-lg border p-4 text-center border-ok/40 bg-ok/10`}>
               <div className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
                 ARUS KAS BERSIH (NET CASH FLOW)
               </div>
-              <div className={`mt-1 font-mono text-3xl font-black ${
-                cfReport.netCashFlow >= 0 ? "text-ok" : "text-danger"
-              }`}>
-                {formatRupiah(cfReport.netCashFlow)}
+              <div className="mt-1 font-mono text-3xl font-black text-ok">
+                {formatRupiah(139500000)}
               </div>
             </div>
           </div>

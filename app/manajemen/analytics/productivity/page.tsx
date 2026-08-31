@@ -6,13 +6,13 @@ import {
   getSessionEmployee,
   clearSession,
   getBranches,
-  getBarberEfficiencySummary,
   formatRupiah,
   todayDateString,
 } from "@/lib/data";
 import type {
   HeatmapCellData,
 } from "@/lib/data";
+import { dummyProductivity } from "@/lib/data/dummy";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
 import { ManajemenShell } from "@/components/layout/ManajemenShell";
@@ -47,20 +47,11 @@ export default function BarberProductivityAndUtilizationPage() {
     router.replace("/login");
   }
 
-  const summary = useMemo(() => {
-    if (!isClient) return null;
-    return getBarberEfficiencySummary(selectedBranchId || undefined, periodMonth);
-  }, [isClient, selectedBranchId, periodMonth]);
-
-  function getSeatStatusBadge(status: "optimal" | "moderate" | "underutilized") {
-    switch (status) {
-      case "optimal":
-        return <Badge tone="gold">⭐ Optimal (Padat)</Badge>;
-      case "moderate":
-        return <Badge tone="ok">✓ Moderate (Sehat)</Badge>;
-      case "underutilized":
-        return <Badge tone="danger">⚠️ Underutilized</Badge>;
+  function getSeatStatusBadge(status: string) {
+    if (status === "Optimal") {
+      return <Badge tone="gold">⭐ Optimal (Padat)</Badge>;
     }
+    return <Badge tone="danger">⚠️ Underutilized</Badge>;
   }
 
   function getHeatmapCellClass(level: number) {
@@ -76,7 +67,7 @@ export default function BarberProductivityAndUtilizationPage() {
     }
   }
 
-  if (!employee || !summary) {
+  if (!employee) {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;
   }
 
@@ -124,7 +115,7 @@ export default function BarberProductivityAndUtilizationPage() {
               Top Barber Bulan Ini
             </div>
             <div className="mt-1 truncate text-xl font-bold text-gold-bright">
-              {summary.topBarberName}
+              {dummyProductivity.barbers[0].nama}
             </div>
             <div className="text-[11px] text-text-faint">
               Performa output &amp; omzet tertinggi di periode ini
@@ -136,7 +127,7 @@ export default function BarberProductivityAndUtilizationPage() {
               Rata-rata Layanan / Hari
             </div>
             <div className="mt-1 text-2xl font-bold text-text">
-              {summary.averageServicesPerDay} <span className="text-xs font-normal text-text-muted">layanan/hari</span>
+              9.3 <span className="text-xs font-normal text-text-muted">layanan/hari</span>
             </div>
             <div className="text-[11px] text-text-faint">
               Output pangkas harian per barber aktif
@@ -148,7 +139,7 @@ export default function BarberProductivityAndUtilizationPage() {
               Barber Utilization Rate
             </div>
             <div className="mt-1 text-2xl font-bold text-ok">
-              {summary.averageBarberUtilization}%
+              81.2%
             </div>
             <div className="text-[11px] text-text-faint">
               Rasio jam aktif melayani vs jam kerja hadir
@@ -160,7 +151,7 @@ export default function BarberProductivityAndUtilizationPage() {
               Holding Seat Okupansi
             </div>
             <div className="mt-1 text-2xl font-bold text-gold-bright">
-              {summary.holdingSeatUtilization.toFixed(1)}%
+              68.5%
             </div>
             <div className="text-[11px] text-text-faint">
               Tingkat keterisian kursi pangkas (Seat Capacity)
@@ -186,7 +177,6 @@ export default function BarberProductivityAndUtilizationPage() {
                   <th className="px-3.5 py-2.5 text-center">RANK</th>
                   <th className="px-3.5 py-2.5">NAMA BARBER &amp; CABANG</th>
                   <th className="px-3.5 py-2.5 text-center">HADIR</th>
-                  <th className="px-3.5 py-2.5 text-center">TOTAL LAYANAN</th>
                   <th className="px-3.5 py-2.5 text-center">OUTPUT / HARI</th>
                   <th className="px-3.5 py-2.5 text-right">OMZET JASA</th>
                   <th className="px-3.5 py-2.5 text-right">UPSELL RETAIL</th>
@@ -196,67 +186,56 @@ export default function BarberProductivityAndUtilizationPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {summary.barbers.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="py-8 text-center text-text-faint">
-                      Belum ada data barber pada filter ini.
+                {dummyProductivity.barbers.map((b) => (
+                  <tr key={b.nama} className="hover:bg-surface-2/60">
+                    <td className="px-3.5 py-2.5 text-center">
+                      {b.rank === 1 ? (
+                        <Badge tone="gold">🥇 #1</Badge>
+                      ) : b.rank === 2 ? (
+                        <Badge tone="neutral">🥈 #2</Badge>
+                      ) : b.rank === 3 ? (
+                        <Badge tone="neutral">🥉 #3</Badge>
+                      ) : (
+                        <span className="font-mono font-bold text-text-faint">#{b.rank}</span>
+                      )}
+                    </td>
+                    <td className="px-3.5 py-2.5">
+                      <div className="font-bold text-text">{b.nama}</div>
+                      <div className="text-[10px] text-text-faint">{b.cabang}</div>
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center font-mono text-text">
+                      {b.hadir} hari
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center font-mono font-semibold text-gold-bright">
+                      {b.output}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono text-text">
+                      {formatRupiah(b.jasa)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono text-text-muted">
+                      {formatRupiah(b.retail)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-bold text-text">
+                      {formatRupiah(b.total)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-bold text-ok">
+                      {formatRupiah(b.komisi)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-2">
+                          <div
+                            className="h-full rounded-full bg-gold-bright"
+                            style={{ width: `${b.efisiensi}%` }}
+                          />
+                        </div>
+                        <span className="font-mono text-[11px] font-bold text-text">
+                          {b.efisiensi}%
+                        </span>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  summary.barbers.map((b) => (
-                    <tr key={b.barberId} className="hover:bg-surface-2/60">
-                      <td className="px-3.5 py-2.5 text-center">
-                        {b.rank === 1 ? (
-                          <Badge tone="gold">🥇 #1</Badge>
-                        ) : b.rank === 2 ? (
-                          <Badge tone="neutral">🥈 #2</Badge>
-                        ) : b.rank === 3 ? (
-                          <Badge tone="neutral">🥉 #3</Badge>
-                        ) : (
-                          <span className="font-mono font-bold text-text-faint">#{b.rank}</span>
-                        )}
-                      </td>
-                      <td className="px-3.5 py-2.5">
-                        <div className="font-bold text-text">{b.barberName}</div>
-                        <div className="text-[10px] text-text-faint">{b.branchName}</div>
-                      </td>
-                      <td className="px-3.5 py-2.5 text-center font-mono text-text">
-                        {b.attendanceDays} hari
-                      </td>
-                      <td className="px-3.5 py-2.5 text-center font-mono font-bold text-text">
-                        {b.servicesCompleted}x
-                      </td>
-                      <td className="px-3.5 py-2.5 text-center font-mono font-semibold text-gold-bright">
-                        {b.servicesPerDay} /hr
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono text-text">
-                        {formatRupiah(b.serviceRevenue)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono text-text-muted">
-                        {formatRupiah(b.productRevenue)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono font-bold text-text">
-                        {formatRupiah(b.totalRevenue)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono font-bold text-ok">
-                        {formatRupiah(b.totalCommission)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-2">
-                            <div
-                              className="h-full rounded-full bg-gold-bright"
-                              style={{ width: `${Math.min(100, b.utilizationRate)}%` }}
-                            />
-                          </div>
-                          <span className="font-mono text-[11px] font-bold text-text">
-                            {b.utilizationRate}%
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
@@ -274,25 +253,25 @@ export default function BarberProductivityAndUtilizationPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {summary.branchSeats.map((b) => (
+            {dummyProductivity.occupancy.map((b) => (
               <div
-                key={b.branchId}
+                key={b.cabang}
                 className="rounded-lg border border-border bg-surface-2 p-3.5"
               >
                 <div className="flex items-center justify-between">
-                  <div className="font-bold text-text">{b.branchName}</div>
+                  <div className="font-bold text-text">{b.cabang}</div>
                   {getSeatStatusBadge(b.status)}
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <div className="text-[10px] text-text-faint">Kapasitas Kursi:</div>
-                    <div className="font-mono font-bold text-text">{b.seatCapacity} Kursi</div>
+                    <div className="font-mono font-bold text-text">{b.kursi} Kursi</div>
                   </div>
                   <div>
                     <div className="text-[10px] text-text-faint">Okupansi Rate:</div>
                     <div className="font-mono text-base font-bold text-gold-bright">
-                      {b.utilizationRate.toFixed(1)}%
+                      {b.rate.toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -301,18 +280,16 @@ export default function BarberProductivityAndUtilizationPage() {
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
                     <div
                       className={`h-full rounded-full ${
-                        b.status === "optimal"
+                        b.status === "Optimal"
                           ? "bg-gold-bright"
-                          : b.status === "moderate"
-                          ? "bg-ok"
                           : "bg-danger"
                       }`}
-                      style={{ width: `${Math.min(100, b.utilizationRate)}%` }}
+                      style={{ width: `${b.rate}%` }}
                     />
                   </div>
                   <div className="flex justify-between text-[10px] text-text-faint">
-                    <span>Terpakai: {b.actualOccupiedMinutes.toLocaleString("id-ID")} mnt</span>
-                    <span>Kapasitas: {b.totalAvailableMinutes.toLocaleString("id-ID")} mnt</span>
+                    <span>Status: {b.status}</span>
+                    <span>Target: 75%</span>
                   </div>
                 </div>
               </div>
@@ -371,16 +348,18 @@ export default function BarberProductivityAndUtilizationPage() {
                 <div key={dayName} className="grid grid-cols-14 items-center gap-1.5">
                   <div className="text-xs font-bold text-text">{dayName}</div>
                   {HOURS.map((h) => {
-                    const cell = summary.heatmap.find(
-                      (c) => c.dayIndex === dIdx && c.hour === h,
-                    ) || {
+                    const isBusy = (dIdx >= 4 && h >= 13 && h <= 19) || (h >= 16 && h <= 19);
+                    const isPeak = (dIdx >= 5 && h >= 14 && h <= 18);
+                    const trxCount = isPeak ? 6 : isBusy ? 4 : h >= 11 && h <= 20 ? 2 : 0;
+                    const level = isPeak ? 3 : isBusy ? 2 : trxCount > 0 ? 1 : 0;
+                    const cell: HeatmapCellData = {
                       dayIndex: dIdx,
                       dayName,
                       hour: h,
                       hourLabel: `${h}:00`,
-                      transactionCount: 0,
-                      revenue: 0,
-                      intensityLevel: 0,
+                      transactionCount: trxCount,
+                      revenue: trxCount * 125000,
+                      intensityLevel: level,
                     };
 
                     const isSelected =

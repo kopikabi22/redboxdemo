@@ -6,14 +6,10 @@ import {
   getSessionEmployee,
   clearSession,
   getBranches,
-  getMenuEngineeringSummary,
   formatRupiah,
   todayDateString,
 } from "@/lib/data";
-import type {
-  ServiceQuadrant,
-  ProductVelocityClassification,
-} from "@/lib/data";
+import { dummyMenuVelocity } from "@/lib/data/dummy";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
 import { ManajemenShell } from "@/components/layout/ManajemenShell";
@@ -31,8 +27,8 @@ export default function MenuAndProductVelocityPage() {
 
   const [periodMonth, setPeriodMonth] = useState(() => todayDateString().slice(0, 7)); // e.g. "2026-08"
 
-  const [serviceFilter, setServiceFilter] = useState<"all" | ServiceQuadrant>("all");
-  const [productFilter, setProductFilter] = useState<"all" | ProductVelocityClassification>("all");
+  const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [productFilter, setProductFilter] = useState<string>("all");
 
   useEffect(() => {
     if (!isClient) return;
@@ -46,26 +42,18 @@ export default function MenuAndProductVelocityPage() {
     router.replace("/login");
   }
 
-  // Velocity & Menu Engineering Data
-  const summary = useMemo(() => {
-    if (!isClient) return null;
-    return getMenuEngineeringSummary(selectedBranchId || undefined, periodMonth);
-  }, [isClient, selectedBranchId, periodMonth]);
-
   const filteredServices = useMemo(() => {
-    if (!summary) return [];
-    if (serviceFilter === "all") return summary.services;
-    return summary.services.filter((s) => s.quadrant === serviceFilter);
-  }, [summary, serviceFilter]);
+    if (serviceFilter === "all") return dummyMenuVelocity.services;
+    return dummyMenuVelocity.services.filter((s) => s.kuadran.toLowerCase() === serviceFilter.toLowerCase());
+  }, [serviceFilter]);
 
   const filteredProducts = useMemo(() => {
-    if (!summary) return [];
-    if (productFilter === "all") return summary.products;
-    return summary.products.filter((p) => p.velocity === productFilter);
-  }, [summary, productFilter]);
+    if (productFilter === "all") return dummyMenuVelocity.retail;
+    return dummyMenuVelocity.retail.filter((p) => p.velocity.toLowerCase() === productFilter.toLowerCase());
+  }, [productFilter]);
 
-  function getServiceQuadrantBadge(quadrant: ServiceQuadrant) {
-    switch (quadrant) {
+  function getServiceQuadrantBadge(quadrant: string) {
+    switch (quadrant.toLowerCase()) {
       case "stars":
         return <Badge tone="gold">⭐ Stars</Badge>;
       case "workhorses":
@@ -74,23 +62,27 @@ export default function MenuAndProductVelocityPage() {
         return <Badge tone="neutral">🧩 Puzzles</Badge>;
       case "dogs":
         return <Badge tone="danger">🐕 Dogs</Badge>;
+      default:
+        return <Badge tone="neutral">{quadrant}</Badge>;
     }
   }
 
-  function getProductVelocityBadge(velocity: ProductVelocityClassification) {
-    switch (velocity) {
-      case "fast_moving":
+  function getProductVelocityBadge(velocity: string) {
+    switch (velocity.toLowerCase()) {
+      case "fast moving":
         return <Badge tone="gold">🚀 Fast Moving</Badge>;
-      case "medium_moving":
+      case "medium moving":
         return <Badge tone="ok">📦 Medium</Badge>;
-      case "slow_moving":
+      case "slow moving":
         return <Badge tone="neutral">⏳ Slow Moving</Badge>;
-      case "dead_stock":
+      case "dead stock":
         return <Badge tone="danger">💀 Dead Stock</Badge>;
+      default:
+        return <Badge tone="neutral">{velocity}</Badge>;
     }
   }
 
-  if (!employee || !summary) {
+  if (!employee) {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;
   }
 
@@ -138,10 +130,10 @@ export default function MenuAndProductVelocityPage() {
               Menu &amp; Produk Dianalisis
             </div>
             <div className="mt-1 text-2xl font-bold text-text">
-              {summary.totalServicesAnalyzed + summary.totalProductsAnalyzed}
+              7
             </div>
             <div className="text-[11px] text-text-faint">
-              {summary.totalServicesAnalyzed} Layanan · {summary.totalProductsAnalyzed} Retail SKU
+              4 Layanan · 3 Retail SKU
             </div>
           </div>
 
@@ -150,7 +142,7 @@ export default function MenuAndProductVelocityPage() {
               Layanan Stars (Bintang)
             </div>
             <div className="mt-1 text-2xl font-bold text-gold-bright">
-              {summary.starsCount} <span className="text-xs font-normal text-text-muted">layanan</span>
+              1 <span className="text-xs font-normal text-text-muted">layanan</span>
             </div>
             <div className="text-[11px] text-text-faint">Volume tinggi &amp; margin profit maksimal</div>
           </div>
@@ -160,9 +152,9 @@ export default function MenuAndProductVelocityPage() {
               Produk Fast Moving
             </div>
             <div className="mt-1 text-2xl font-bold text-ok">
-              {summary.fastMovingCount} <span className="text-xs font-normal text-text-muted">produk</span>
+              1 <span className="text-xs font-normal text-text-muted">produk</span>
             </div>
-            <div className="text-[11px] text-text-faint">Penjualan retail $\ge 10$ pcs/bulan</div>
+            <div className="text-[11px] text-text-faint">Penjualan retail &ge; 10 pcs/bulan</div>
           </div>
 
           <div className="rounded-lg border border-border bg-surface p-3.5">
@@ -170,7 +162,7 @@ export default function MenuAndProductVelocityPage() {
               Peringatan Dead Stock
             </div>
             <div className="mt-1 text-2xl font-bold text-danger">
-              {summary.deadStockCount} <span className="text-xs font-normal text-text-muted">produk</span>
+              1 <span className="text-xs font-normal text-text-muted">produk</span>
             </div>
             <div className="text-[11px] text-text-faint">0 penjualan dalam 60 hari terakhir</div>
           </div>
@@ -209,59 +201,41 @@ export default function MenuAndProductVelocityPage() {
             <table className="w-full text-left text-xs">
               <thead className="border-b border-border bg-surface-2 text-text-muted">
                 <tr>
-                  <th className="px-3.5 py-2.5">LAYANAN &amp; KATEGORI</th>
+                  <th className="px-3.5 py-2.5">LAYANAN</th>
                   <th className="px-3.5 py-2.5 text-right">HARGA JUAL</th>
-                  <th className="px-3.5 py-2.5 text-right">DIRECT COST</th>
-                  <th className="px-3.5 py-2.5 text-right">UNIT MARGIN (%)</th>
+                  <th className="px-3.5 py-2.5 text-right">MARGIN %</th>
                   <th className="px-3.5 py-2.5 text-center">TERJUAL (QTY)</th>
                   <th className="px-3.5 py-2.5 text-right">TOTAL OMZET</th>
                   <th className="px-3.5 py-2.5 text-right">TOTAL LABA</th>
                   <th className="px-3.5 py-2.5 text-center">KUADRAN</th>
-                  <th className="px-3.5 py-2.5">STRATEGI REKOMENDASI</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filteredServices.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="py-8 text-center text-text-faint">
-                      Tidak ada layanan pada kuadran ini.
+                {filteredServices.map((s, idx) => (
+                  <tr key={idx} className="hover:bg-surface-2/60">
+                    <td className="px-3.5 py-2.5 font-bold text-text">
+                      {s.layanan}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono text-text">
+                      {formatRupiah(s.harga)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-bold text-gold-bright">
+                      {s.margin}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center font-mono font-bold text-text">
+                      {s.terjual}x
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-semibold text-text">
+                      {formatRupiah(s.harga * s.terjual)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-bold text-ok">
+                      {formatRupiah(s.laba)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center">
+                      {getServiceQuadrantBadge(s.kuadran)}
                     </td>
                   </tr>
-                ) : (
-                  filteredServices.map((s) => (
-                    <tr key={s.serviceId} className="hover:bg-surface-2/60">
-                      <td className="px-3.5 py-2.5">
-                        <div className="font-bold text-text">{s.serviceName}</div>
-                        <div className="text-[10px] text-text-faint">{s.category}</div>
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono text-text">
-                        {formatRupiah(s.price)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono text-text-muted">
-                        {formatRupiah(s.estimatedCost)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono">
-                        <div className="font-bold text-gold-bright">{formatRupiah(s.unitMargin)}</div>
-                        <div className="text-[10px] text-text-muted">({s.marginPercentage.toFixed(0)}%)</div>
-                      </td>
-                      <td className="px-3.5 py-2.5 text-center font-mono font-bold text-text">
-                        {s.quantitySold}x
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono font-semibold text-text">
-                        {formatRupiah(s.totalRevenue)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono font-bold text-ok">
-                        {formatRupiah(s.totalProfit)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-center">
-                        {getServiceQuadrantBadge(s.quadrant)}
-                      </td>
-                      <td className="max-w-xs px-3.5 py-2.5 text-[11px] text-text-muted">
-                        {s.actionStrategy}
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
@@ -280,7 +254,7 @@ export default function MenuAndProductVelocityPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              {(["all", "fast_moving", "medium_moving", "slow_moving", "dead_stock"] as const).map((v) => (
+              {(["all", "fast moving", "medium moving", "dead stock"] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setProductFilter(v)}
@@ -290,7 +264,7 @@ export default function MenuAndProductVelocityPage() {
                       : "bg-surface-2 text-text-muted hover:text-text"
                   }`}
                 >
-                  {v === "all" ? "Semua Kecepatan" : v.replace("_", " ")}
+                  {v === "all" ? "Semua Kecepatan" : v}
                 </button>
               ))}
             </div>
@@ -300,60 +274,43 @@ export default function MenuAndProductVelocityPage() {
             <table className="w-full text-left text-xs">
               <thead className="border-b border-border bg-surface-2 text-text-muted">
                 <tr>
-                  <th className="px-3.5 py-2.5">SKU &amp; NAMA PRODUK</th>
+                  <th className="px-3.5 py-2.5">NAMA PRODUK</th>
                   <th className="px-3.5 py-2.5 text-right">HARGA JUAL</th>
-                  <th className="px-3.5 py-2.5 text-right">MODAL (HPP)</th>
                   <th className="px-3.5 py-2.5 text-right">MARGIN %</th>
                   <th className="px-3.5 py-2.5 text-center">TERJUAL</th>
-                  <th className="px-3.5 py-2.5 text-right">LABA KOTOR</th>
-                  <th className="px-3.5 py-2.5 text-center">STOK GUDANG</th>
+                  <th className="px-3.5 py-2.5 text-right">TOTAL OMZET</th>
+                  <th className="px-3.5 py-2.5 text-center">SISA STOK</th>
                   <th className="px-3.5 py-2.5 text-center">VELOCITY</th>
-                  <th className="px-3.5 py-2.5">REKOMENDASI AKSI</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="py-8 text-center text-text-faint">
-                      Tidak ada produk pada kategori velocity ini.
+                {filteredProducts.map((p, idx) => (
+                  <tr key={idx} className="hover:bg-surface-2/60">
+                    <td className="px-3.5 py-2.5 font-bold text-text">
+                      {p.produk}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono text-text">
+                      {formatRupiah(p.harga)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-bold text-gold-bright">
+                      {p.margin}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center font-mono font-bold text-text">
+                      {p.terjual} pcs
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-semibold text-text">
+                      {formatRupiah(p.harga * p.terjual)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center font-mono">
+                      <span className={`font-bold ${p.stok <= 15 ? "text-danger" : "text-text"}`}>
+                        {p.stok} pcs
+                      </span>
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center">
+                      {getProductVelocityBadge(p.velocity)}
                     </td>
                   </tr>
-                ) : (
-                  filteredProducts.map((p) => (
-                    <tr key={p.productId} className="hover:bg-surface-2/60">
-                      <td className="px-3.5 py-2.5">
-                        <div className="font-bold text-text">{p.productName}</div>
-                        <div className="font-mono text-[10px] text-text-faint">{p.sku} · {p.category}</div>
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono text-text">
-                        {formatRupiah(p.price)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono text-text-muted">
-                        {formatRupiah(p.cost)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono font-bold text-gold-bright">
-                        {p.marginPercentage.toFixed(0)}%
-                      </td>
-                      <td className="px-3.5 py-2.5 text-center font-mono font-bold text-text">
-                        {p.quantitySold} pcs
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-mono font-bold text-ok">
-                        {formatRupiah(p.totalGrossProfit)}
-                      </td>
-                      <td className="px-3.5 py-2.5 text-center font-mono">
-                        <span className={`font-bold ${p.currentStock <= 5 ? "text-danger" : "text-text"}`}>
-                          {p.currentStock} pcs
-                        </span>
-                      </td>
-                      <td className="px-3.5 py-2.5 text-center">
-                        {getProductVelocityBadge(p.velocity)}
-                      </td>
-                      <td className="max-w-xs px-3.5 py-2.5 text-[11px] text-text-muted">
-                        {p.actionStrategy}
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
@@ -371,34 +328,32 @@ export default function MenuAndProductVelocityPage() {
           </div>
 
           <div className="mt-3.5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {summary.topCrossSells.length === 0 ? (
-              <div className="col-span-3 py-6 text-center text-xs text-text-faint">
-                Belum ada data transaksi keranjang campuran pada periode ini.
-              </div>
-            ) : (
-              summary.topCrossSells.map((pair, idx) => (
-                <div
-                  key={`${pair.serviceName}-${pair.productName}`}
-                  className="rounded-lg border border-border bg-surface-2 p-3.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-gold-bright">#{idx + 1} Best Pair</span>
-                    <Badge tone="ok">{pair.crossSellRate}% Konversi</Badge>
-                  </div>
-
-                  <div className="mt-2.5 space-y-1 text-xs">
-                    <div className="font-bold text-text">{pair.serviceName}</div>
-                    <div className="text-[11px] text-text-muted">↳ direkomendasikan bersama:</div>
-                    <div className="font-semibold text-gold-bright">{pair.productName}</div>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2 text-[11px] text-text-faint">
-                    <span>Frekuensi Transaksi:</span>
-                    <span className="font-mono font-bold text-text">{pair.pairCount}x bersama</span>
-                  </div>
+            {[
+              { serviceName: "Haircut Premium + Styling", productName: "Pomade Matte 100g", rate: 68, count: 165 },
+              { serviceName: "Haircut Reguler", productName: "Shampoo Anti Ketombe 200ml", rate: 35, count: 140 },
+              { serviceName: "Hair Coloring", productName: "Beard Oil 30ml", rate: 22, count: 33 }
+            ].map((pair, idx) => (
+              <div
+                key={idx}
+                className="rounded-lg border border-border bg-surface-2 p-3.5"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-gold-bright">#{idx + 1} Best Pair</span>
+                  <Badge tone="ok">{pair.rate}% Konversi</Badge>
                 </div>
-              ))
-            )}
+
+                <div className="mt-2.5 space-y-1 text-xs">
+                  <div className="font-bold text-text">{pair.serviceName}</div>
+                  <div className="text-[11px] text-text-muted">↳ direkomendasikan bersama:</div>
+                  <div className="font-semibold text-gold-bright">{pair.productName}</div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2 text-[11px] text-text-faint">
+                  <span>Frekuensi Transaksi:</span>
+                  <span className="font-mono font-bold text-text">{pair.count}x bersama</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

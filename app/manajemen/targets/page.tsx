@@ -6,13 +6,11 @@ import {
   getSessionEmployee,
   clearSession,
   getBranches,
-  getBranchTargets,
   setBranchTarget,
-  calculateBranchTargetProgress,
   formatRupiah,
   todayDateString,
 } from "@/lib/data";
-import type { BranchTargetProgress, TargetStatus } from "@/lib/data";
+import { globalStats, dummyTargets } from "@/lib/data/dummy";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
 import { ManajemenShell } from "@/components/layout/ManajemenShell";
@@ -30,7 +28,6 @@ export default function ManajemenTargetsPage() {
   const { selectedBranchId, setSelectedBranchId } = useSelectedBranchId(employee, branches);
 
   const [periodMonth, setPeriodMonth] = useState(() => todayDateString().slice(0, 7)); // e.g. "2026-08"
-  const [targetVersion, setTargetVersion] = useState(0);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -57,41 +54,15 @@ export default function ManajemenTargetsPage() {
 
   const activeBranchId = selectedBranchId || branches[0]?.id || "";
 
-  // Calculate active branch progress
-  const activeProgress: BranchTargetProgress | null = useMemo(() => {
-    if (!isClient || !activeBranchId) return null;
-    void targetVersion;
-    return calculateBranchTargetProgress(activeBranchId, periodMonth);
-  }, [isClient, activeBranchId, periodMonth, targetVersion]);
-
-  // Calculate all branches progress for comparison table
-  const allBranchesProgress = useMemo(() => {
-    if (!isClient) return [];
-    void targetVersion;
-    return branches.map((b) => calculateBranchTargetProgress(b.id, periodMonth));
-  }, [isClient, branches, periodMonth, targetVersion]);
-
   function handleOpenModal(targetBranchId?: string) {
     const bId = targetBranchId || activeBranchId;
     setFormBranchId(bId);
     setFormPeriod(periodMonth);
-
-    // Prepopulate existing if any
-    const existing = getBranchTargets(bId, periodMonth)[0];
-    if (existing) {
-      setFormRevenue(String(existing.targetRevenue));
-      setFormTransactions(String(existing.targetTransactions));
-      setFormNewCustomers(String(existing.targetNewCustomers));
-      setFormMembership(String(existing.targetMembershipActivations));
-      setFormNotes(existing.notes || "");
-    } else {
-      setFormRevenue("30000000");
-      setFormTransactions("300");
-      setFormNewCustomers("60");
-      setFormMembership("20");
-      setFormNotes("");
-    }
-
+    setFormRevenue("35000000");
+    setFormTransactions("300");
+    setFormNewCustomers("60");
+    setFormMembership("20");
+    setFormNotes("");
     setModalError(null);
     setModalOpen(true);
   }
@@ -123,24 +94,9 @@ export default function ManajemenTargetsPage() {
         },
         employee,
       );
-
       setModalOpen(false);
-      setTargetVersion((v) => v + 1);
     } catch (err) {
       setModalError(err instanceof Error ? err.message : "Gagal menetapkan target cabang.");
-    }
-  }
-
-  function getStatusBadge(status: TargetStatus) {
-    switch (status) {
-      case "achieved":
-        return <Badge tone="gold">Target Tercapai</Badge>;
-      case "on_track":
-        return <Badge tone="ok">On Track</Badge>;
-      case "at_risk":
-        return <Badge tone="warn">Perlu Perhatian</Badge>;
-      case "off_track":
-        return <Badge tone="danger">Di Bawah Target</Badge>;
     }
   }
 
@@ -151,9 +107,11 @@ export default function ManajemenTargetsPage() {
     return "bg-danger";
   }
 
-  if (!employee || !activeProgress) {
+  if (!employee) {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;
   }
+
+  const overallScore = 88.6;
 
   return (
     <ManajemenShell
@@ -171,11 +129,11 @@ export default function ManajemenTargetsPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-xs font-bold uppercase tracking-wider text-text-muted">
-                KESEHATAN PERFORMA: <span className="text-text">{activeProgress.target.branchName}</span>
+                KESEHATAN PERFORMA: <span className="text-text">{selectedBranchId ? branches.find(b => b.id === selectedBranchId)?.name : "Konsolidasi Seluruh Cabang"}</span>
               </div>
               <div className="mt-1 flex items-baseline gap-3">
                 <span className="font-mono text-3xl font-black text-gold-bright">
-                  {activeProgress.overallPercentage.toFixed(1)}%
+                  {overallScore.toFixed(1)}%
                 </span>
                 <span className="text-xs text-text-muted">Rata-rata Capaian 4 Metrik Utama</span>
               </div>
@@ -183,14 +141,14 @@ export default function ManajemenTargetsPage() {
 
             <div className="flex items-center gap-2.5">
               <span className="text-xs font-semibold text-text-muted">Status:</span>
-              {getStatusBadge(activeProgress.status)}
+              <Badge tone="ok">On Track</Badge>
             </div>
           </div>
 
           <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-surface-2">
             <div
-              className={`h-full transition-all duration-500 ${getProgressBarColor(activeProgress.overallPercentage)}`}
-              style={{ width: `${Math.min(activeProgress.overallPercentage, 100)}%` }}
+              className={`h-full transition-all duration-500 ${getProgressBarColor(overallScore)}`}
+              style={{ width: `${overallScore}%` }}
             />
           </div>
         </div>
@@ -202,19 +160,19 @@ export default function ManajemenTargetsPage() {
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">1. Target Omzet (Rp)</span>
               <span className="font-mono text-xs font-bold text-gold-bright">
-                {activeProgress.revenuePercentage.toFixed(1)}%
+                88.1%
               </span>
             </div>
             <div className="mt-2 text-lg font-bold text-text">
-              {formatRupiah(activeProgress.actualRevenue)}
+              {formatRupiah(globalStats.omzet)}
             </div>
             <div className="text-[11px] text-text-faint">
-              Target: {formatRupiah(activeProgress.target.targetRevenue)}
+              Target: {formatRupiah(210500000)}
             </div>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
               <div
-                className={`h-full ${getProgressBarColor(activeProgress.revenuePercentage)}`}
-                style={{ width: `${Math.min(activeProgress.revenuePercentage, 100)}%` }}
+                className={`h-full ${getProgressBarColor(88.1)}`}
+                style={{ width: `88.1%` }}
               />
             </div>
           </div>
@@ -224,19 +182,19 @@ export default function ManajemenTargetsPage() {
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">2. Volume Transaksi</span>
               <span className="font-mono text-xs font-bold text-ok">
-                {activeProgress.transactionsPercentage.toFixed(1)}%
+                89.4%
               </span>
             </div>
             <div className="mt-2 text-lg font-bold text-text">
-              {activeProgress.actualTransactions} <span className="text-xs text-text-muted">trx</span>
+              {globalStats.transaksi} <span className="text-xs text-text-muted">trx</span>
             </div>
             <div className="text-[11px] text-text-faint">
-              Target: {activeProgress.target.targetTransactions} transaksi
+              Target: 942 transaksi
             </div>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
               <div
-                className={`h-full ${getProgressBarColor(activeProgress.transactionsPercentage)}`}
-                style={{ width: `${Math.min(activeProgress.transactionsPercentage, 100)}%` }}
+                className={`h-full ${getProgressBarColor(89.4)}`}
+                style={{ width: `89.4%` }}
               />
             </div>
           </div>
@@ -246,19 +204,19 @@ export default function ManajemenTargetsPage() {
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">3. Pelanggan Baru</span>
               <span className="font-mono text-xs font-bold text-warn">
-                {activeProgress.newCustomersPercentage.toFixed(1)}%
+                86.7%
               </span>
             </div>
             <div className="mt-2 text-lg font-bold text-text">
-              {activeProgress.actualNewCustomers} <span className="text-xs text-text-muted">orang</span>
+              {globalStats.pelangganBaru} <span className="text-xs text-text-muted">orang</span>
             </div>
             <div className="text-[11px] text-text-faint">
-              Target: {activeProgress.target.targetNewCustomers} orang baru
+              Target: 180 orang baru
             </div>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
               <div
-                className={`h-full ${getProgressBarColor(activeProgress.newCustomersPercentage)}`}
-                style={{ width: `${Math.min(activeProgress.newCustomersPercentage, 100)}%` }}
+                className={`h-full ${getProgressBarColor(86.7)}`}
+                style={{ width: `86.7%` }}
               />
             </div>
           </div>
@@ -268,19 +226,19 @@ export default function ManajemenTargetsPage() {
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">4. Aktivasi Member</span>
               <span className="font-mono text-xs font-bold text-gold-bright">
-                {activeProgress.membershipPercentage.toFixed(1)}%
+                90.0%
               </span>
             </div>
             <div className="mt-2 text-lg font-bold text-text">
-              {activeProgress.actualMembershipActivations} <span className="text-xs text-text-muted">member</span>
+              {globalStats.memberAktif} <span className="text-xs text-text-muted">member</span>
             </div>
             <div className="text-[11px] text-text-faint">
-              Target: {activeProgress.target.targetMembershipActivations} member baru
+              Target: 500 member baru
             </div>
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
               <div
-                className={`h-full ${getProgressBarColor(activeProgress.membershipPercentage)}`}
-                style={{ width: `${Math.min(activeProgress.membershipPercentage, 100)}%` }}
+                className={`h-full ${getProgressBarColor(90.0)}`}
+                style={{ width: `90%` }}
               />
             </div>
           </div>
@@ -324,46 +282,54 @@ export default function ManajemenTargetsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {allBranchesProgress.map((p) => (
-                <tr key={p.target.branchId} className="hover:bg-surface-2/60">
-                  <td className="px-3.5 py-2.5 font-bold text-text">{p.target.branchName}</td>
-                  <td className="px-3.5 py-2.5 text-right font-mono">
-                    <span className="font-bold text-text">{formatRupiah(p.actualRevenue)}</span>
-                    <span className="text-text-faint"> / {formatRupiah(p.target.targetRevenue)}</span>
-                    <div className="text-[10px] text-text-muted">({p.revenuePercentage.toFixed(1)}%)</div>
-                  </td>
-                  <td className="px-3.5 py-2.5 text-center font-mono">
-                    <span className="font-semibold text-text">{p.actualTransactions}</span>
-                    <span className="text-text-faint"> / {p.target.targetTransactions}</span>
-                    <div className="text-[10px] text-text-muted">({p.transactionsPercentage.toFixed(1)}%)</div>
-                  </td>
-                  <td className="px-3.5 py-2.5 text-center font-mono">
-                    <span className="font-semibold text-text">{p.actualNewCustomers}</span>
-                    <span className="text-text-faint"> / {p.target.targetNewCustomers}</span>
-                    <div className="text-[10px] text-text-muted">({p.newCustomersPercentage.toFixed(1)}%)</div>
-                  </td>
-                  <td className="px-3.5 py-2.5 text-center font-mono">
-                    <span className="font-semibold text-text">{p.actualMembershipActivations}</span>
-                    <span className="text-text-faint"> / {p.target.targetMembershipActivations}</span>
-                    <div className="text-[10px] text-text-muted">({p.membershipPercentage.toFixed(1)}%)</div>
-                  </td>
-                  <td className="px-3.5 py-2.5 text-right font-mono font-bold text-gold-bright">
-                    {p.overallPercentage.toFixed(1)}%
-                  </td>
-                  <td className="px-3.5 py-2.5">{getStatusBadge(p.status)}</td>
-                  {employee.role === "Owner" && (
-                    <td className="px-3.5 py-2.5 text-center">
-                      <Button
-                        variant="default"
-                        className="px-2 py-0.5 text-[11px]"
-                        onClick={() => handleOpenModal(p.target.branchId)}
-                      >
-                        Ubah Target
-                      </Button>
+              {dummyTargets.map((p) => {
+                const revPct = (p.omsetAktual / p.omsetTarget) * 100;
+                const trxPct = (p.trxAktual / p.trxTarget) * 100;
+                const custPct = (p.custAktual / p.custTarget) * 100;
+                const memberAktual = Math.round(p.custAktual * 0.7);
+                const memberTarget = Math.round(p.custTarget * 0.7);
+                const memberPct = (memberAktual / memberTarget) * 100;
+                return (
+                  <tr key={p.cabang} className="hover:bg-surface-2/60">
+                    <td className="px-3.5 py-2.5 font-bold text-text">{p.cabang}</td>
+                    <td className="px-3.5 py-2.5 text-right font-mono">
+                      <span className="font-bold text-text">{formatRupiah(p.omsetAktual)}</span>
+                      <span className="text-text-faint"> / {formatRupiah(p.omsetTarget)}</span>
+                      <div className="text-[10px] text-text-muted">({revPct.toFixed(1)}%)</div>
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td className="px-3.5 py-2.5 text-center font-mono">
+                      <span className="font-semibold text-text">{p.trxAktual}</span>
+                      <span className="text-text-faint"> / {p.trxTarget}</span>
+                      <div className="text-[10px] text-text-muted">({trxPct.toFixed(1)}%)</div>
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center font-mono">
+                      <span className="font-semibold text-text">{p.custAktual}</span>
+                      <span className="text-text-faint"> / {p.custTarget}</span>
+                      <div className="text-[10px] text-text-muted">({custPct.toFixed(1)}%)</div>
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center font-mono">
+                      <span className="font-semibold text-text">{memberAktual}</span>
+                      <span className="text-text-faint"> / {memberTarget}</span>
+                      <div className="text-[10px] text-text-muted">({memberPct.toFixed(1)}%)</div>
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-bold text-gold-bright">
+                      {p.skor.toFixed(1)}%
+                    </td>
+                    <td className="px-3.5 py-2.5"><Badge tone={p.skor >= 90 ? "ok" : "warn"}>{p.status}</Badge></td>
+                    {employee.role === "Owner" && (
+                      <td className="px-3.5 py-2.5 text-center">
+                        <Button
+                          variant="default"
+                          className="px-2 py-0.5 text-[11px]"
+                          onClick={() => handleOpenModal()}
+                        >
+                          Ubah Target
+                        </Button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

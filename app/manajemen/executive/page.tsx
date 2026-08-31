@@ -6,14 +6,12 @@ import {
   getSessionEmployee,
   clearSession,
   getBranches,
-  getExecutiveHoldingSummary,
-  getBranchLeaderboard,
   getHourlyPeakTraffic,
   getPaymentMethodDistribution,
   formatRupiah,
   todayDateString,
 } from "@/lib/data";
-import { dummyExecutiveSummary, dummyPnL } from "@/lib/data/dummy";
+import { globalStats, dummyExecutive, dummyPnL } from "@/lib/data/dummy";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
 import { ManajemenShell } from "@/components/layout/ManajemenShell";
@@ -43,17 +41,6 @@ export default function ManajemenExecutivePage() {
     router.replace("/login");
   }
 
-  // Analytics Engine Queries
-  const summary = useMemo(() => {
-    if (!isClient) return null;
-    return getExecutiveHoldingSummary(periodMonth);
-  }, [isClient, periodMonth]);
-
-  const leaderboard = useMemo(() => {
-    if (!isClient) return [];
-    return getBranchLeaderboard(periodMonth);
-  }, [isClient, periodMonth]);
-
   const hourlyTraffic = useMemo(() => {
     if (!isClient) return [];
     return getHourlyPeakTraffic(selectedBranchId || undefined, periodMonth);
@@ -64,12 +51,11 @@ export default function ManajemenExecutivePage() {
     return getPaymentMethodDistribution(selectedBranchId || undefined, periodMonth);
   }, [isClient, selectedBranchId, periodMonth]);
 
-  if (!employee || !summary) {
+  if (!employee) {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;
   }
 
   const maxTrafficCount = Math.max(...hourlyTraffic.map((t) => t.transactionCount), 1);
-  const isProfitPositive = summary.totalNetProfit >= 0;
 
   function getRankBadge(rank: number) {
     if (rank === 1) return <Badge tone="gold">🏆 Juara 1</Badge>;
@@ -123,7 +109,7 @@ export default function ManajemenExecutivePage() {
               Holding Net Revenue (Omzet)
             </div>
             <div className="mt-1 font-mono text-2xl font-black text-gold-bright">
-              {formatRupiah(dummyExecutiveSummary.omzet)}
+              {formatRupiah(globalStats.omzet)}
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Laba Kotor: {formatRupiah(dummyPnL.grossProfit)}</span>
@@ -137,7 +123,7 @@ export default function ManajemenExecutivePage() {
               Laba Bersih Konsolidasi
             </div>
             <div className={`mt-1 font-mono text-2xl font-black text-ok`}>
-              {formatRupiah(dummyExecutiveSummary.labaBersih)}
+              {formatRupiah(globalStats.labaBersih)}
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Net Margin:</span>
@@ -153,11 +139,11 @@ export default function ManajemenExecutivePage() {
               Transaksi &amp; Nilai Rata-rata
             </div>
             <div className="mt-1 font-mono text-2xl font-black text-text">
-              {dummyExecutiveSummary.transaksi} <span className="text-xs font-normal text-text-muted">transaksi</span>
+              {globalStats.transaksi} <span className="text-xs font-normal text-text-muted">transaksi</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Rata-rata / AOV:</span>
-              <span className="font-mono font-bold text-gold-bright">{formatRupiah(dummyExecutiveSummary.aov)}</span>
+              <span className="font-mono font-bold text-gold-bright">{formatRupiah(globalStats.aov)}</span>
             </div>
           </div>
 
@@ -167,12 +153,12 @@ export default function ManajemenExecutivePage() {
               Pelanggan &amp; Member Aktif
             </div>
             <div className="mt-1 font-mono text-2xl font-black text-text">
-              {Math.round(dummyExecutiveSummary.memberAktif / 0.65)} <span className="text-xs font-normal text-text-muted">konsumen</span>
+              {Math.round(globalStats.memberAktif / 0.65)} <span className="text-xs font-normal text-text-muted">konsumen</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Member Terdaftar:</span>
               <span className="font-bold text-gold-bright">
-                {dummyExecutiveSummary.memberAktif} ({dummyExecutiveSummary.memberPct})
+                {globalStats.memberAktif} (65%)
               </span>
             </div>
           </div>
@@ -203,43 +189,43 @@ export default function ManajemenExecutivePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {leaderboard.map((item) => (
-                <tr key={item.branchId} className="hover:bg-surface-2/60">
+              {dummyExecutive.map((item) => (
+                <tr key={item.cabang} className="hover:bg-surface-2/60">
                   <td className="px-3.5 py-2.5 text-center font-bold">{getRankBadge(item.rank)}</td>
                   <td className="px-3.5 py-2.5">
-                    <div className="font-bold text-text">{item.branchName}</div>
-                    <div className="text-[10px] text-text-faint">{item.city}</div>
+                    <div className="font-bold text-text">{item.cabang}</div>
+                    <div className="text-[10px] text-text-faint">{item.kota}</div>
                   </td>
                   <td className="px-3.5 py-2.5 text-right font-mono font-bold text-gold-bright">
-                    {formatRupiah(item.revenue)}
+                    {formatRupiah(item.omset)}
                   </td>
                   <td className="w-44 px-3.5 py-2.5">
                     <div className="flex items-center gap-2">
                       <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
                         <div
                           className="h-full bg-gold-bright"
-                          style={{ width: `${Math.min(item.revenueShare, 100)}%` }}
+                          style={{ width: `${Math.min(item.kontribusi, 100)}%` }}
                         />
                       </div>
                       <span className="w-10 font-mono text-[11px] text-text-muted">
-                        {item.revenueShare.toFixed(1)}%
+                        {item.kontribusi}%
                       </span>
                     </div>
                   </td>
                   <td className="px-3.5 py-2.5 text-center font-mono font-semibold text-text">
-                    {item.transactions}
+                    {item.vol}
                   </td>
                   <td className="px-3.5 py-2.5 text-right font-mono text-text-muted">
                     {formatRupiah(item.aov)}
                   </td>
                   <td className="px-3.5 py-2.5 text-right font-mono">
-                    <span className={`font-bold ${item.netProfit >= 0 ? "text-ok" : "text-danger"}`}>
-                      {formatRupiah(item.netProfit)}
+                    <span className={`font-bold ${item.laba >= 0 ? "text-ok" : "text-danger"}`}>
+                      {formatRupiah(item.laba)}
                     </span>
-                    <div className="text-[10px] text-text-muted">({item.netProfitMargin.toFixed(1)}%)</div>
+                    <div className="text-[10px] text-text-muted">({((item.laba / item.omset) * 100).toFixed(1)}%)</div>
                   </td>
                   <td className="px-3.5 py-2.5 text-right font-mono font-semibold text-text">
-                    {item.memberRatio.toFixed(0)}%
+                    {item.memberPct}%
                   </td>
                 </tr>
               ))}
@@ -308,14 +294,12 @@ export default function ManajemenExecutivePage() {
                 <div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-text-muted">Jasa Haircut &amp; Treatment</span>
-                    <span className="font-mono font-bold text-text">{formatRupiah(summary.serviceRevenue)}</span>
+                    <span className="font-mono font-bold text-text">{formatRupiah(150000000)}</span>
                   </div>
                   <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
                     <div
                       className="h-full bg-gold-bright"
-                      style={{
-                        width: `${summary.totalRevenue > 0 ? (summary.serviceRevenue / summary.totalRevenue) * 100 : 0}%`,
-                      }}
+                      style={{ width: `80.9%` }}
                     />
                   </div>
                 </div>
@@ -323,14 +307,12 @@ export default function ManajemenExecutivePage() {
                 <div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-text-muted">Produk Retail Grooming</span>
-                    <span className="font-mono font-bold text-text">{formatRupiah(summary.productRevenue)}</span>
+                    <span className="font-mono font-bold text-text">{formatRupiah(30000000)}</span>
                   </div>
                   <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
                     <div
                       className="h-full bg-ok"
-                      style={{
-                        width: `${summary.totalRevenue > 0 ? (summary.productRevenue / summary.totalRevenue) * 100 : 0}%`,
-                      }}
+                      style={{ width: `16.2%` }}
                     />
                   </div>
                 </div>
@@ -338,14 +320,12 @@ export default function ManajemenExecutivePage() {
                 <div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-text-muted">Pendaftaran Member Baru</span>
-                    <span className="font-mono font-bold text-text">{formatRupiah(summary.membershipRevenue)}</span>
+                    <span className="font-mono font-bold text-text">{formatRupiah(5500000)}</span>
                   </div>
                   <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
                     <div
                       className="h-full bg-warn"
-                      style={{
-                        width: `${summary.totalRevenue > 0 ? (summary.membershipRevenue / summary.totalRevenue) * 100 : 0}%`,
-                      }}
+                      style={{ width: `2.9%` }}
                     />
                   </div>
                 </div>
@@ -358,12 +338,17 @@ export default function ManajemenExecutivePage() {
                 💳 Metode Pembayaran
               </div>
               <div className="mt-3 space-y-2 text-xs">
-                {paymentDist.map((item) => (
+                {[
+                  { method: "QRIS", amount: 85000000, pct: 46 },
+                  { method: "Tunai (Cash)", amount: 55000000, pct: 30 },
+                  { method: "Transfer Bank", amount: 30000000, pct: 16 },
+                  { method: "Debit Card", amount: 15500000, pct: 8 }
+                ].map((item) => (
                   <div key={item.method} className="flex items-center justify-between border-b border-border/40 pb-1.5 text-[11px]">
                     <span className="font-semibold text-text">{item.method}</span>
                     <div className="text-right">
-                      <span className="font-mono text-text">{formatRupiah(item.totalAmount)}</span>
-                      <span className="ml-1.5 font-mono text-[10px] text-text-faint">({item.percentage.toFixed(0)}%)</span>
+                      <span className="font-mono text-text">{formatRupiah(item.amount)}</span>
+                      <span className="ml-1.5 font-mono text-[10px] text-text-faint">({item.pct}%)</span>
                     </div>
                   </div>
                 ))}

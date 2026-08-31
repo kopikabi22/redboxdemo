@@ -14,6 +14,7 @@ import {
   formatRupiah,
 } from "@/lib/data";
 import type { EmployeeAdvance, AdvanceStatus } from "@/lib/data";
+import { dummyKasbon } from "@/lib/data/dummy";
 import { useIsClient } from "@/lib/hooks/useIsClient";
 import { useSelectedBranchId } from "@/lib/hooks/useSelectedBranch";
 import { ManajemenShell } from "@/components/layout/ManajemenShell";
@@ -234,51 +235,24 @@ export default function ManajemenEmployeeAdvancesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredAdvances.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="py-10 text-center text-text-faint">
-                    Belum ada data pengajuan kasbon karyawan.
+              {dummyKasbon.map((adv) => (
+                <tr key={adv.id} className="hover:bg-surface-2/60">
+                  <td className="px-3.5 py-2.5 font-mono font-bold text-gold-bright">{adv.id}</td>
+                  <td className="px-3.5 py-2.5 text-text-muted">{adv.tanggal}</td>
+                  <td className="px-3.5 py-2.5 font-semibold text-text">{adv.karyawan}</td>
+                  <td className="px-3.5 py-2.5 text-text-muted">{adv.cabang}</td>
+                  <td className="px-3.5 py-2.5 text-right font-mono font-bold text-danger">
+                    {formatRupiah(adv.nominal)}
+                  </td>
+                  <td className="max-w-xs px-3.5 py-2.5 truncate text-text-muted">{adv.alasan}</td>
+                  <td className="px-3.5 py-2.5"><Badge tone="ok">{adv.status}</Badge></td>
+                  <td className="px-3.5 py-2.5 text-center">
+                    <span className="text-[11px] text-text-faint">
+                      Disetujui oleh Owner
+                    </span>
                   </td>
                 </tr>
-              ) : (
-                filteredAdvances.map((adv) => (
-                  <tr key={adv.id} className="hover:bg-surface-2/60">
-                    <td className="px-3.5 py-2.5 font-mono font-bold text-gold-bright">{adv.advanceNumber}</td>
-                    <td className="px-3.5 py-2.5 text-text-muted">{adv.requestDate}</td>
-                    <td className="px-3.5 py-2.5 font-semibold text-text">{adv.employeeName}</td>
-                    <td className="px-3.5 py-2.5 text-text-muted">{adv.branchName}</td>
-                    <td className="px-3.5 py-2.5 text-right font-mono font-bold text-danger">
-                      {formatRupiah(adv.amount)}
-                    </td>
-                    <td className="max-w-xs px-3.5 py-2.5 truncate text-text-muted">{adv.reason}</td>
-                    <td className="px-3.5 py-2.5">{getStatusBadge(adv.status)}</td>
-                    <td className="px-3.5 py-2.5 text-center">
-                      {adv.status === "pending" ? (
-                        <div className="flex items-center justify-center gap-1.5">
-                          <Button
-                            variant="primary"
-                            className="px-2.5 py-0.5 text-[11px]"
-                            onClick={() => handleApprove(adv)}
-                          >
-                            Setujui
-                          </Button>
-                          <Button
-                            variant="danger"
-                            className="px-2.5 py-0.5 text-[11px]"
-                            onClick={() => handleReject(adv)}
-                          >
-                            Tolak
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-[11px] text-text-faint">
-                          {adv.approvedByName ? `Disetujui oleh ${adv.approvedByName}` : "-"}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
