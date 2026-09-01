@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, type ReactNode } from "react";
-import type { Branch, Employee } from "@/lib/data";
+import { getSessionEmployee, type Branch, type Employee } from "@/lib/data";
 import { Button } from "@/components/ui/Button";
 
 export interface ManajemenNavItem {
@@ -82,7 +82,7 @@ export const NAV_GROUPS: ManajemenNavGroup[] = [
 export const NAV_ITEMS: ManajemenNavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 interface ManajemenShellProps {
-  employee: Employee;
+  employee?: Employee | null;
   branches: Branch[];
   /** Branch currently being viewed/managed for branch-scoped data (Employee Master list, product stock). Owner can change it; BranchManager's is fixed to their own. */
   selectedBranchId: string;
@@ -109,7 +109,27 @@ export function ManajemenShell({
   onLogout,
   children,
 }: ManajemenShellProps) {
+  const router = useRouter();
   const pathname = usePathname();
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
+
+  // Cross-role RBAC Route Protection:
+  // - If manajemen session is missing but karyawan session is detected -> force redirect to /pos/new
+  // - If both sessions are missing -> redirect to /manajemen/login
+  useEffect(() => {
+    const manajemenSession = getSessionEmployee("manajemen");
+    const karyawanSession = getSessionEmployee("karyawan");
+
+    if (manajemenSession) {
+      setIsAuthorized(true);
+      setCheckingAuth(false);
+    } else if (karyawanSession) {
+      router.replace("/pos/new");
+    } else {
+      router.replace("/manajemen/login");
+    }
+  }, [router]);
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
 
   // Helper to determine if a specific navigation item is active
@@ -213,6 +233,22 @@ export function ManajemenShell({
     }));
   };
 
+  // Prevent interface flicker / leak while authentication is being verified
+  if (checkingAuth || !isAuthorized) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-bg text-text-faint">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold-bright border-t-transparent" />
+          <div className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Mengautentikasi hak akses manajemen…
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const activeEmployee = employee ?? getSessionEmployee("manajemen");
+
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-[255px_1fr]">
       <aside className="flex flex-col border-r border-border bg-bg-raised md:sticky md:top-0 md:h-screen">
@@ -283,7 +319,7 @@ export function ManajemenShell({
         <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3.5 border-b border-border bg-bg-raised px-6 py-3.5">
           <div className="font-display text-[22px] tracking-wide">{pageTitle}</div>
           <div className="flex items-center gap-2.5">
-            {employee.role === "Owner" || employee.role === "Finance" || employee.role === "Admin" ? (
+            {activeEmployee?.role === "Owner" || activeEmployee?.role === "Finance" || activeEmployee?.role === "Admin" ? (
               <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-gold-bright">
                 <select
                   value={selectedBranchId}
@@ -298,13 +334,13 @@ export function ManajemenShell({
                 </select>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-bold text-gold-bright">
+              <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-gold-bright">
                 Cabang {selectedBranch?.name ?? "—"}
               </div>
             )}
             <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-text-muted">
               <span className="inline-block h-5 w-5 rounded-full bg-red" />
-              {employee.name} · {employee.role === "Owner" ? "Owner/HQ" : employee.role === "Finance" ? "Finance" : employee.role === "Admin" ? "Admin" : "Branch Manager"}
+              {activeEmployee?.name ?? "Staff"} · {activeEmployee?.role === "Owner" ? "Owner/HQ" : activeEmployee?.role === "Finance" ? "Finance" : activeEmployee?.role === "Admin" ? "Admin" : "Branch Manager"}
             </div>
           </div>
         </header>
