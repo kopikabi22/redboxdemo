@@ -186,27 +186,25 @@ export default function MembershipPage() {
                   <th className="px-3 py-2 font-normal" />
                 </tr>
               </thead>
-              <tbody>
-                {dummyReward.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-10 text-center text-text-faint">
-                      Belum ada data
+              <tbody>\n              {dummyReward.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-text-faint">
+                    Belum ada data
+                  </td>
+                </tr>
+              ) : (
+                dummyReward.map((rw) => (
+                  <tr key={rw.id} className="hover:bg-surface-2/60">
+                    <td className="px-3 py-2 font-bold">{rw.nama}</td>
+                    <td className="px-3 py-2 font-mono font-bold text-gold-bright">{rw.biayaPoin} Pts</td>
+                    <td className="px-3 py-2 text-text-muted">{rw.deskripsi}</td>
+                    <td className="px-3 py-2">
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-ok/10 text-ok">{rw.status}</span>
                     </td>
+                    <td className="px-3 py-2 text-right"><button className="text-gold-bright">Edit</button></td>
                   </tr>
-                ) : (
-                  dummyReward.map((rw) => (
-                    <tr key={rw.id} className="hover:bg-surface-2/60">
-                      <td className="px-3 py-2 font-bold">{rw.nama}</td>
-                      <td className="px-3 py-2 font-mono font-bold text-gold-bright">{rw.biayaPoin} Pts</td>
-                      <td className="px-3 py-2 text-text-muted">{rw.deskripsi}</td>
-                      <td className="px-3 py-2">
-                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-ok/10 text-ok">{rw.status}</span>
-                      </td>
-                      <td className="px-3 py-2 text-right"><button className="text-gold-bright">Edit</button></td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
+                ))
+              )}\n            </tbody>
             </table>
           </div>
         </div>
