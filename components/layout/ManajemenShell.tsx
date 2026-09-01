@@ -47,6 +47,7 @@ export const NAV_GROUPS: ManajemenNavGroup[] = [
       { id: "catalog", label: "Master Layanan & Produk", href: "/manajemen/catalog" },
       { id: "catalog_velocity", label: "Menu & Product Velocity", href: "/manajemen/catalog/velocity" },
       { id: "batches", label: "Batch & Kadaluarsa (FEFO)", href: "/manajemen/inventory/batches" },
+      { id: "assets", label: "Aset & Alat Kerja", href: "/manajemen/inventory/assets" },
       { id: "stock_opname", label: "Stock Opname", href: "/manajemen/inventory/opname" },
       { id: "stock_transfers", label: "Transfer Stok Cabang", href: "/manajemen/inventory/transfers" },
       { id: "purchase_orders", label: "Purchase Orders (PO)", href: "/manajemen/purchasing/orders" },

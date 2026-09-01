@@ -174,3 +174,11 @@ export const dummyKasbon = [
   { id: "KSB-08-01", tanggal: "2026-08-15", karyawan: "Fajar", cabang: "Samadikun", nominal: 500000, alasan: "Biaya sekolah anak", status: "Disetujui" },
   { id: "KSB-08-02", tanggal: "2026-08-30", karyawan: "Rio", cabang: "Bypass", nominal: 300000, alasan: "Keperluan mendesak keluarga", status: "Menunggu Persetujuan" }
 ];
+
+export const dummyAssets = [
+  { kode: "AST-CLP-001", nama: "Wahl Super Taper Clipper", kategori: "Alat Barber", cabang: "Bypass", pic: "Rio Saputra", kondisi: "Baik", tanggalBeli: "2025-01-10" },
+  { kode: "AST-CLP-002", nama: "Wahl Detailer Trimmer", kategori: "Alat Barber", cabang: "Bypass", pic: "Dedi Kurniawan", kondisi: "Service", tanggalBeli: "2025-01-15" },
+  { kode: "AST-CHR-001", nama: "Kursi Barber Takara Belmont", kategori: "Furnitur", cabang: "Samadikun", pic: "Fajar Ramadhan", kondisi: "Baik", tanggalBeli: "2024-11-20" },
+  { kode: "AST-HRD-001", nama: "Hair Dryer Phillips Pro", kategori: "Alat Barber", cabang: "Samadikun", pic: "Nita Amelia", kondisi: "Baik", tanggalBeli: "2025-02-05" },
+  { kode: "AST-CLP-003", nama: "Kemei Cordless Clipper", kategori: "Alat Barber", cabang: "CSB Mall", pic: "Zainal", kondisi: "Rusak", tanggalBeli: "2025-03-01" }
+];
