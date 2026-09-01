@@ -111,37 +111,98 @@ export function ManajemenShell({
   const pathname = usePathname();
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
 
-  // Helper to determine the active group ID based on activeNavId or pathname
-  const getActiveGroupId = () => {
-    for (const group of NAV_GROUPS) {
-      if (
-        group.items.some(
-          (item) => item.id === activeNavId || (pathname && (item.href === pathname || pathname.startsWith(item.href + "/"))),
-        )
-      ) {
-        return group.id;
-      }
+  // Helper to determine if a specific navigation item is active
+  const isItemActive = (item: ManajemenNavItem) => {
+    if (item.id === activeNavId) return true;
+    if (!pathname) return false;
+    if (item.href === "/manajemen") {
+      return pathname === "/manajemen";
     }
-    return NAV_GROUPS[0]?.id ?? "operations";
+    return pathname === item.href || pathname.startsWith(item.href + "/");
   };
 
-  // Initialize open groups: ONLY the active group is open (true), all others are collapsed (false)
+  // Helper to determine if a group matches the current path/active item
+  const isGroupActive = (groupId: string): boolean => {
+    if (pathname) {
+      if (groupId === "catalog_inventory") {
+        if (
+          pathname.includes("/inventory") ||
+          pathname.includes("/catalog") ||
+          pathname.includes("/purchasing")
+        ) {
+          return true;
+        }
+      }
+
+      if (groupId === "finance_hr") {
+        if (
+          pathname.includes("/finance") ||
+          pathname.includes("/hr") ||
+          pathname.includes("/employees")
+        ) {
+          return true;
+        }
+      }
+
+      if (groupId === "crm_loyalty") {
+        if (
+          pathname.includes("/crm") ||
+          pathname.includes("/membership") ||
+          pathname.includes("/promotions") ||
+          pathname.includes("/reminders") ||
+          pathname.includes("/customers")
+        ) {
+          return true;
+        }
+      }
+
+      if (groupId === "executive_analytics") {
+        if (
+          pathname.includes("/executive") ||
+          pathname.includes("/analytics") ||
+          pathname.includes("/targets") ||
+          pathname.includes("/audit")
+        ) {
+          return true;
+        }
+      }
+
+      if (groupId === "operations") {
+        if (
+          pathname.includes("/branch") ||
+          pathname.includes("/appointments") ||
+          pathname.includes("/schedules") ||
+          pathname === "/manajemen"
+        ) {
+          return true;
+        }
+      }
+    }
+
+    const group = NAV_GROUPS.find((g) => g.id === groupId);
+    return group ? group.items.some((item) => isItemActive(item)) : false;
+  };
+
+  // Initialize open groups: Any group that matches is opened (true), others collapsed (false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const activeId = getActiveGroupId();
     const state: Record<string, boolean> = {};
     for (const group of NAV_GROUPS) {
-      state[group.id] = group.id === activeId;
+      state[group.id] = isGroupActive(group.id);
     }
     return state;
   });
 
-  // When activeNavId or pathname changes, ensure the active group is expanded
+  // When activeNavId or pathname changes, ensure the active group remains expanded
   useEffect(() => {
-    const activeId = getActiveGroupId();
-    setOpenGroups((prev) => ({
-      ...prev,
-      [activeId]: true,
-    }));
+    setOpenGroups((prev) => {
+      const next = { ...prev };
+      for (const group of NAV_GROUPS) {
+        if (isGroupActive(group.id)) {
+          next[group.id] = true;
+        }
+      }
+      return next;
+    });
   }, [activeNavId, pathname]);
 
   const toggleGroup = (groupId: string) => {
@@ -162,7 +223,7 @@ export function ManajemenShell({
         <nav className="flex-1 space-y-1.5 overflow-y-auto p-2.5">
           {NAV_GROUPS.map((group) => {
             const isOpen = !!openGroups[group.id];
-            const hasActiveItem = group.items.some((item) => item.id === activeNavId);
+            const hasActiveItem = isGroupActive(group.id) || group.items.some((item) => isItemActive(item));
 
             return (
               <div key={group.id} className="rounded-lg border border-border/40 bg-surface/40">
@@ -188,7 +249,7 @@ export function ManajemenShell({
                 {isOpen && (
                   <div className="space-y-0.5 border-t border-border/30 px-1.5 py-1.5">
                     {group.items.map((item) => {
-                      const isActive = item.id === activeNavId;
+                      const isActive = isItemActive(item);
                       return (
                         <Link
                           key={item.id}
