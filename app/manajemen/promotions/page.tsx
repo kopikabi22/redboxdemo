@@ -194,28 +194,30 @@ export default function PromotionsManagementPage() {
               <th className="px-3 py-2 font-normal" />
             </tr>
           </thead>
-          <tbody>\n              {dummyPromo.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="py-10 text-center text-text-faint">
-                    Belum ada data
+          <tbody>
+            {dummyPromo.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="py-10 text-center text-text-faint">
+                  Belum ada data
+                </td>
+              </tr>
+            ) : (
+              dummyPromo.map((pr) => (
+                <tr key={pr.kode} className="hover:bg-surface-2/60">
+                  <td className="px-3 py-2 font-mono font-bold text-gold-bright">{pr.kode}</td>
+                  <td className="px-3 py-2 font-bold">{pr.nama}</td>
+                  <td className="px-3 py-2 font-mono text-ok">{pr.diskon}</td>
+                  <td className="px-3 py-2">{pr.scope}</td>
+                  <td className="px-3 py-2 text-text-muted">{pr.kuota}</td>
+                  <td className="px-3 py-2">{pr.periode}</td>
+                  <td className="px-3 py-2">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${pr.status === 'Aktif' ? 'bg-ok/10 text-ok' : 'bg-neutral-800 text-text-muted'}`}>{pr.status}</span>
                   </td>
+                  <td className="px-3 py-2 text-right"><button className="text-gold-bright">Edit</button></td>
                 </tr>
-              ) : (
-                dummyPromo.map((pr) => (
-                  <tr key={pr.kode} className="hover:bg-surface-2/60">
-                    <td className="px-3 py-2 font-mono font-bold text-gold-bright">{pr.kode}</td>
-                    <td className="px-3 py-2 font-bold">{pr.nama}</td>
-                    <td className="px-3 py-2 font-mono text-ok">{pr.diskon}</td>
-                    <td className="px-3 py-2">{pr.scope}</td>
-                    <td className="px-3 py-2 text-text-muted">{pr.kuota}</td>
-                    <td className="px-3 py-2">{pr.periode}</td>
-                    <td className="px-3 py-2">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${pr.status === 'Aktif' ? 'bg-ok/10 text-ok' : 'bg-neutral-800 text-text-muted'}`}>{pr.status}</span>
-                    </td>
-                    <td className="px-3 py-2 text-right"><button className="text-gold-bright">Edit</button></td>
-                  </tr>
-                ))
-              )}\n            </tbody>
+              ))
+            )}
+          </tbody>
         </table>
       </div>
 
