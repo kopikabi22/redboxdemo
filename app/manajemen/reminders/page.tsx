@@ -253,7 +253,8 @@ export default function ManajemenRemindersPage() {
                 <th className="px-3.5 py-2.5 text-center">AKSI</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">\n              {dummyReminder.length === 0 ? (
+            <tbody className="divide-y divide-border">
+              {dummyReminder.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-10 text-center text-text-faint">
                     Belum ada data
@@ -274,7 +275,8 @@ export default function ManajemenRemindersPage() {
                     <td className="px-3.5 py-2.5 text-center"><button className="text-gold-bright">Kirim</button></td>
                   </tr>
                 ))
-              )}\n            </tbody>
+              )}
+            </tbody>
           </table>
         </div>
       </div>
