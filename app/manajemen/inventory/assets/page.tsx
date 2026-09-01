@@ -153,11 +153,18 @@ export default function ManajemenAssetsPage() {
                 className="w-60 rounded border border-border bg-surface-2 px-2.5 py-1 text-text focus:border-gold-bright focus:outline-none"
               />
             </div>
+
+            <div className="text-[11px] text-text-muted">
+              Menampilkan <span className="font-bold text-text">{filteredAssets.length}</span> aset
+            </div>
           </div>
 
-          <div className="text-[11px] text-text-muted">
-            Menampilkan <span className="font-bold text-text">{filteredAssets.length}</span> aset
-          </div>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-red-700"
+          >
+            <span>+ Tambah Aset Baru</span>
+          </button>
         </div>
 
         {/* Data Table */}
