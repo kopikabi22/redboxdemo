@@ -130,7 +130,25 @@ export function ManajemenShell({
       router.replace("/manajemen/login");
     }
   }, [router]);
-  const selectedBranch = branches.find((b) => b.id === selectedBranchId);
+
+  const [currentBranchId, setCurrentBranchId] = useState<string>(
+    selectedBranchId || (branches[0]?.id ?? "")
+  );
+
+  useEffect(() => {
+    if (selectedBranchId) {
+      setCurrentBranchId(selectedBranchId);
+    }
+  }, [selectedBranchId]);
+
+  const handleBranchChange = (newBranchId: string) => {
+    setCurrentBranchId(newBranchId);
+    onBranchChange(newBranchId);
+  };
+
+  const selectedBranch =
+    branches.find((b) => b.id === currentBranchId) ||
+    branches.find((b) => b.id === selectedBranchId);
 
   // Helper to determine if a specific navigation item is active
   const isItemActive = (item: ManajemenNavItem) => {
@@ -319,25 +337,20 @@ export function ManajemenShell({
         <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3.5 border-b border-border bg-bg-raised px-6 py-3.5">
           <div className="font-display text-[22px] tracking-wide">{pageTitle}</div>
           <div className="flex items-center gap-2.5">
-            {activeEmployee?.role === "Owner" || activeEmployee?.role === "Finance" || activeEmployee?.role === "Admin" ? (
-              <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-gold-bright">
-                <select
-                  value={selectedBranchId}
-                  onChange={(event) => onBranchChange(event.target.value)}
-                  className="bg-transparent py-1 text-xs font-bold text-gold-bright focus:outline-none"
-                >
-                  {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id} className="bg-surface text-text">
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-gold-bright">
-                Cabang {selectedBranch?.name ?? "—"}
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-gold-bright">
+              <span className="text-text-muted">Cabang:</span>
+              <select
+                value={currentBranchId}
+                onChange={(event) => handleBranchChange(event.target.value)}
+                className="cursor-pointer bg-transparent py-1 text-xs font-bold text-gold-bright focus:outline-none"
+              >
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id} className="bg-surface text-text">
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-text-muted">
               <span className="inline-block h-5 w-5 rounded-full bg-red" />
               {activeEmployee?.name ?? "Staff"} · {activeEmployee?.role === "Owner" ? "Owner/HQ" : activeEmployee?.role === "Finance" ? "Finance" : activeEmployee?.role === "Admin" ? "Admin" : "Branch Manager"}

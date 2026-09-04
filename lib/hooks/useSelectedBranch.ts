@@ -20,10 +20,11 @@ export function useSelectedBranchId(
   if (!employee) {
     return { selectedBranchId: "", setSelectedBranchId: () => {} };
   }
-  if (employee.role !== "Owner") {
-    return { selectedBranchId: employee.branchId, setSelectedBranchId: () => {} };
-  }
+  const defaultBranchId = employee.branchId || (branches[0]?.id ?? "");
   const selectedBranchId =
-    manualBranchId && branches.some((b) => b.id === manualBranchId) ? manualBranchId : (branches[0]?.id ?? "");
+    manualBranchId && branches.some((b) => b.id === manualBranchId)
+      ? manualBranchId
+      : (branches.find((b) => b.id === defaultBranchId)?.id ?? (branches[0]?.id ?? ""));
+
   return { selectedBranchId, setSelectedBranchId: setManualBranchId };
 }

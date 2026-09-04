@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getSessionEmployee,
@@ -79,6 +79,14 @@ export default function CustomerDatabasePage() {
   void dataVersion;
   const customers = getCustomers();
 
+  // Pagination state (Immutable .slice)
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
+  const totalPages = Math.ceil(customers.length / pageSize) || 1;
+  const paginatedCustomers = useMemo(() => {
+    return customers.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+  }, [customers, currentPage, pageSize]);
+
   function handleSave() {
     if (!form) return;
     setFormError(null);
@@ -121,8 +129,11 @@ export default function CustomerDatabasePage() {
         Satu tabel customer dipakai lintas POV (Quick-Lookup di POS memakai data yang sama). Segmentasi, RFM, dan preferensi servis tersimpan terpusat.
       </div>
 
-      <div className="mb-3.5 flex justify-end">
-        <Button variant="primary" onClick={() => setForm(EMPTY_FORM)}>
+      <div className="mb-3.5 flex justify-end gap-2">
+        <Button variant="default" className="cursor-pointer" onClick={() => window.print()}>
+          🖨️ Cetak / Export
+        </Button>
+        <Button variant="primary" className="cursor-pointer" onClick={() => setForm(EMPTY_FORM)}>
           + Tambah Customer
         </Button>
       </div>
@@ -136,12 +147,12 @@ export default function CustomerDatabasePage() {
               <th className="px-3 py-2 font-normal">Tipe</th>
               <th className="px-3 py-2 font-normal">Tier</th>
               <th className="px-3 py-2 font-normal">Poin</th>
-              <th className="px-3 py-2 font-normal">Preferensi & Catatan</th>
+              <th className="px-3 py-2 font-normal">Preferensi &amp; Catatan</th>
               <th className="px-3 py-2 font-normal" />
             </tr>
           </thead>
           <tbody>
-            {customers.map((customer) => {
+            {paginatedCustomers.map((customer: Customer) => {
               const pref = customer.preferences;
               const barber = pref?.preferredBarberId ? barbers.find((b) => b.id === pref.preferredBarberId) : null;
               const hasPref = pref && (pref.preferredStyle || pref.preferredBarberId || pref.preferredProduct || pref.notes);
@@ -187,7 +198,7 @@ export default function CustomerDatabasePage() {
                     <div className="flex justify-end gap-1.5">
                       <Button
                         variant="default"
-                        className="px-2.5 py-1.5 text-xs"
+                        className="cursor-pointer px-2.5 py-1.5 text-xs"
                         onClick={() =>
                           setForm({
                             id: customer.id,
@@ -205,7 +216,11 @@ export default function CustomerDatabasePage() {
                       >
                         Ubah
                       </Button>
-                      <Button variant="danger" className="px-2.5 py-1.5 text-xs" onClick={() => setDeleteTarget(customer)}>
+                      <Button
+                        variant="danger"
+                        className="cursor-pointer px-2.5 py-1.5 text-xs"
+                        onClick={() => alert("Fitur Hapus dinonaktifkan pada mode UAT Demo untuk melindungi integritas data.")}
+                      >
                         Hapus
                       </Button>
                     </div>
@@ -215,6 +230,36 @@ export default function CustomerDatabasePage() {
             })}
           </tbody>
         </table>
+
+        {/* Pagination Toolbar */}
+        {totalPages > 1 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-2 px-4 py-3 text-xs">
+            <div className="text-text-muted">
+              Menampilkan <span className="font-bold text-text">{currentPage * pageSize + 1}</span> - <span className="font-bold text-text">{Math.min((currentPage + 1) * pageSize, customers.length)}</span> dari <span className="font-bold text-text">{customers.length}</span> customer
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={currentPage === 0}
+                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                className="cursor-pointer rounded border border-border bg-surface px-3 py-1.5 font-semibold text-text transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ◀ Sebelumnya
+              </button>
+              <span className="font-mono font-bold text-gold-bright">
+                Halaman {currentPage + 1} / {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages - 1}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                className="cursor-pointer rounded border border-border bg-surface px-3 py-1.5 font-semibold text-text transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Selanjutnya ▶
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Modal

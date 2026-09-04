@@ -139,8 +139,11 @@ export default function EmployeeMasterPage() {
         lengkap tersedia di Tier 2/3.
       </div>
 
-      <div className="mb-3.5 flex justify-end">
-        <Button variant="primary" onClick={openCreateForm}>
+      <div className="mb-3.5 flex justify-end gap-2">
+        <Button variant="default" className="cursor-pointer" onClick={() => window.print()}>
+          🖨️ Cetak / Export
+        </Button>
+        <Button variant="primary" className="cursor-pointer" onClick={openCreateForm}>
           + Tambah Karyawan
         </Button>
       </div>
@@ -167,15 +170,15 @@ export default function EmployeeMasterPage() {
                   <td className="px-3 py-2">••{employee.pin.slice(-2)}</td>
                   <td className="px-3 py-2">
                     <div className="flex justify-end gap-1.5">
-                      <Button variant="default" className="px-2.5 py-1.5 text-xs" onClick={() => openEditForm(employee)}>
+                      <Button variant="default" className="cursor-pointer px-2.5 py-1.5 text-xs" onClick={() => openEditForm(employee)}>
                         Ubah
                       </Button>
                       <Button
                         variant="danger"
-                        className="px-2.5 py-1.5 text-xs"
+                        className="cursor-pointer px-2.5 py-1.5 text-xs"
                         disabled={isSelf}
                         title={isSelf ? "Tidak bisa menghapus akun sendiri yang sedang login." : undefined}
-                        onClick={() => setDeleteTarget(employee)}
+                        onClick={() => alert("Fitur Hapus dinonaktifkan pada mode UAT Demo untuk melindungi integritas data.")}
                       >
                         Hapus
                       </Button>

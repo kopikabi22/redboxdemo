@@ -180,8 +180,11 @@ export default function CatalogPage() {
 
       {tab === "service" ? (
         <>
-          <div className="mb-3.5 flex justify-end">
-            <Button variant="primary" disabled={!canEdit} onClick={() => setServiceForm(EMPTY_SERVICE_FORM)}>
+          <div className="mb-3.5 flex justify-end gap-2">
+            <Button variant="default" className="cursor-pointer" onClick={() => window.print()}>
+              🖨️ Cetak / Export
+            </Button>
+            <Button variant="primary" className="cursor-pointer" disabled={!canEdit} onClick={() => setServiceForm(EMPTY_SERVICE_FORM)}>
               + Tambah Service
             </Button>
           </div>
@@ -209,7 +212,7 @@ export default function CatalogPage() {
                       <div className="flex justify-end gap-1.5">
                         <Button
                           variant="default"
-                          className="px-2.5 py-1.5 text-xs"
+                          className="cursor-pointer px-2.5 py-1.5 text-xs"
                           disabled={!canEdit}
                           onClick={() =>
                             setServiceForm({
@@ -224,7 +227,12 @@ export default function CatalogPage() {
                         >
                           Ubah
                         </Button>
-                        <Button variant="danger" className="px-2.5 py-1.5 text-xs" disabled={!canEdit} onClick={() => setDeleteServiceTarget(service)}>
+                        <Button
+                          variant="danger"
+                          className="cursor-pointer px-2.5 py-1.5 text-xs"
+                          disabled={!canEdit}
+                          onClick={() => alert("Fitur Hapus dinonaktifkan pada mode UAT Demo untuk melindungi integritas data.")}
+                        >
                           Hapus
                         </Button>
                       </div>
@@ -237,8 +245,11 @@ export default function CatalogPage() {
         </>
       ) : (
         <>
-          <div className="mb-3.5 flex justify-end">
-            <Button variant="primary" disabled={!canEdit} onClick={() => setProductForm(EMPTY_PRODUCT_FORM)}>
+          <div className="mb-3.5 flex justify-end gap-2">
+            <Button variant="default" className="cursor-pointer" onClick={() => window.print()}>
+              🖨️ Cetak / Export
+            </Button>
+            <Button variant="primary" className="cursor-pointer" disabled={!canEdit} onClick={() => setProductForm(EMPTY_PRODUCT_FORM)}>
               + Tambah Produk
             </Button>
           </div>
@@ -266,12 +277,12 @@ export default function CatalogPage() {
                       <td className="px-3 py-2">{qty} unit</td>
                       <td className="px-3 py-2">
                         <div className="flex justify-end gap-1.5">
-                          <Button variant="gold" className="px-2.5 py-1.5 text-xs" onClick={() => openStockModal(product)}>
+                          <Button variant="gold" className="cursor-pointer px-2.5 py-1.5 text-xs" onClick={() => openStockModal(product)}>
                             Kelola Stok
                           </Button>
                           <Button
                             variant="default"
-                            className="px-2.5 py-1.5 text-xs"
+                            className="cursor-pointer px-2.5 py-1.5 text-xs"
                             disabled={!canEdit}
                             onClick={() =>
                               setProductForm({
@@ -288,7 +299,12 @@ export default function CatalogPage() {
                           >
                             Ubah
                           </Button>
-                          <Button variant="danger" className="px-2.5 py-1.5 text-xs" disabled={!canEdit} onClick={() => setDeleteProductTarget(product)}>
+                          <Button
+                            variant="danger"
+                            className="cursor-pointer px-2.5 py-1.5 text-xs"
+                            disabled={!canEdit}
+                            onClick={() => alert("Fitur Hapus dinonaktifkan pada mode UAT Demo untuk melindungi integritas data.")}
+                          >
                             Hapus
                           </Button>
                         </div>

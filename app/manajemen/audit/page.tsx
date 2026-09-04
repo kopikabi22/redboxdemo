@@ -82,6 +82,19 @@ export default function ManajemenAuditPage() {
     );
   }, [allLogs, searchQuery]);
 
+  // Pagination state (Immutable .slice)
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
+  const totalPages = Math.ceil(dummyAuditLog.length / pageSize) || 1;
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [actionFilter, searchQuery, selectedBranchId]);
+
+  const paginatedAuditLogs = useMemo(() => {
+    return dummyAuditLog.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+  }, [currentPage, pageSize]);
+
   // Stats
   const stats = useMemo(() => {
     const totalLogs = filteredLogs.length;
@@ -200,8 +213,17 @@ export default function ManajemenAuditPage() {
             </div>
           </div>
 
-          <div className="text-[11px] text-text-faint">
-            🔒 Log audit bersifat <span className="font-semibold text-gold-bright">Immutable</span> (tidak dapat diubah/dihapus).
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="cursor-pointer flex items-center gap-1.5 rounded border border-border bg-surface-2 px-3 py-1 text-xs font-semibold text-text transition-colors hover:bg-surface hover:border-gold-bright"
+            >
+              <span>🖨️ Cetak / Export</span>
+            </button>
+            <div className="text-[11px] text-text-faint">
+              🔒 Log audit bersifat <span className="font-semibold text-gold-bright">Immutable</span> (tidak dapat diubah/dihapus).
+            </div>
           </div>
         </div>
 
@@ -227,7 +249,7 @@ export default function ManajemenAuditPage() {
                   </td>
                 </tr>
               ) : (
-                dummyAuditLog.map((log) => (
+                paginatedAuditLogs.map((log) => (
                   <tr key={log.id} className="hover:bg-surface-2/60">
                     <td className="px-3.5 py-2.5 font-mono text-gold-bright">{log.waktu}</td>
                     <td className="px-3.5 py-2.5 font-bold">{log.petugas}</td>
@@ -236,13 +258,65 @@ export default function ManajemenAuditPage() {
                     <td className="px-3.5 py-2.5 font-mono">{log.entitas}</td>
                     <td className="px-3.5 py-2.5 text-text-muted">{log.deskripsi}</td>
                     <td className="px-3.5 py-2.5 text-center">
-                      <button className="text-gold-bright">Lihat</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedLog({
+                            id: log.id,
+                            timestamp: log.waktu,
+                            action: log.jenis,
+                            actorId: "actor",
+                            actorName: log.petugas,
+                            actorRole: "Owner",
+                            branchId: "b",
+                            branchName: log.cabang,
+                            details: log.deskripsi,
+                            entityId: log.entitas,
+                            entityType: "Audit",
+                            metadata: { rincian: log.deskripsi, petugas: log.petugas },
+                          });
+                          setModalOpen(true);
+                        }}
+                        className="cursor-pointer font-bold text-gold-bright hover:underline"
+                      >
+                        Lihat
+                      </button>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+
+          {/* Pagination Toolbar */}
+          {totalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-2 px-4 py-3 text-xs">
+              <div className="text-text-muted">
+                Menampilkan <span className="font-bold text-text">{currentPage * pageSize + 1}</span> - <span className="font-bold text-text">{Math.min((currentPage + 1) * pageSize, dummyAuditLog.length)}</span> dari <span className="font-bold text-text">{dummyAuditLog.length}</span> log
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage === 0}
+                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                  className="cursor-pointer rounded border border-border bg-surface px-3 py-1.5 font-semibold text-text transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  ◀ Sebelumnya
+                </button>
+                <span className="font-mono font-bold text-gold-bright">
+                  Halaman {currentPage + 1} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages - 1}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                  className="cursor-pointer rounded border border-border bg-surface px-3 py-1.5 font-semibold text-text transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Selanjutnya ▶
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

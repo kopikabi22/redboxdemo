@@ -119,10 +119,15 @@ export default function BranchManagementPage() {
                 <td className="px-3 py-2">{branch.phone}</td>
                 <td className="px-3 py-2">
                   <div className="flex justify-end gap-1.5">
-                    <Button variant="default" className="px-2.5 py-1.5 text-xs" disabled={!canEdit} onClick={() => setForm({ ...branch, id: branch.id })}>
+                    <Button variant="default" className="cursor-pointer px-2.5 py-1.5 text-xs" disabled={!canEdit} onClick={() => setForm({ ...branch, id: branch.id })}>
                       Ubah
                     </Button>
-                    <Button variant="danger" className="px-2.5 py-1.5 text-xs" disabled={!canEdit} onClick={() => setDeleteTarget(branch)}>
+                    <Button
+                      variant="danger"
+                      className="cursor-pointer px-2.5 py-1.5 text-xs"
+                      disabled={!canEdit}
+                      onClick={() => alert("Fitur Hapus dinonaktifkan pada mode UAT Demo untuk melindungi integritas data.")}
+                    >
                       Hapus
                     </Button>
                   </div>

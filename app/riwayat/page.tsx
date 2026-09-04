@@ -349,6 +349,19 @@ export default function RiwayatTransaksiPage() {
     return totalLunasCount > 0 ? Math.round(grandTotal / totalLunasCount) : 0;
   }, [grandTotal, totalLunasCount]);
 
+  // Pagination State (Immutable .slice)
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
+  const totalPages = Math.ceil(filteredTransactions.length / pageSize) || 1;
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedPeriod, selectedCustomDate, selectedBranch, statusFilter, searchQuery]);
+
+  const paginatedTransactions = useMemo(() => {
+    return filteredTransactions.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+  }, [filteredTransactions, currentPage, pageSize]);
+
   if (!employee) {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;
   }
@@ -440,15 +453,15 @@ export default function RiwayatTransaksiPage() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 rounded border border-border bg-surface-2 px-3 py-1.5 text-xs font-semibold text-text transition-colors hover:bg-surface hover:border-gold-bright"
+              className="cursor-pointer flex items-center gap-1.5 rounded border border-border bg-surface-2 px-3 py-1.5 text-xs font-semibold text-text transition-colors hover:bg-surface hover:border-gold-bright"
             >
               <span>🖨️</span>
               <span>Print</span>
             </button>
             <button
               type="button"
-              onClick={() => alert("Export Excel Riwayat Transaksi sedang diproses...")}
-              className="flex items-center gap-1.5 rounded bg-green-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-green-600"
+              onClick={() => window.print()}
+              className="cursor-pointer flex items-center gap-1.5 rounded bg-green-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-green-600"
             >
               <span>📊</span>
               <span>Export Excel</span>
@@ -576,79 +589,111 @@ export default function RiwayatTransaksiPage() {
               Tidak ada transaksi yang cocok dengan filter.
             </div>
           ) : (
-            filteredTransactions.map((trx) => (
-              <div
-                key={trx.id}
-                className="group rounded-lg border border-border bg-surface p-4 transition-all hover:border-gold-bright/50 hover:bg-surface-2/40"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  {/* Left Metadata */}
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <span className="font-mono text-sm font-bold text-gold-bright">
-                      {trx.id}
-                    </span>
-                    <Badge tone={trx.orderType === "Booking" ? "gold" : trx.orderType === "Walk-In" ? "ok" : "neutral"}>
-                      {trx.orderType}
-                    </Badge>
-                    <Badge tone={trx.status === "Lunas" ? "ok" : "danger"}>
-                      {trx.status}
-                    </Badge>
-                    <span className="text-xs text-text-muted">• {trx.timestamp}</span>
+            <>
+              {paginatedTransactions.map((trx) => (
+                <div
+                  key={trx.id}
+                  className="group rounded-lg border border-border bg-surface p-4 transition-all hover:border-gold-bright/50 hover:bg-surface-2/40"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    {/* Left Metadata */}
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span className="font-mono text-sm font-bold text-gold-bright">
+                        {trx.id}
+                      </span>
+                      <Badge tone={trx.orderType === "Booking" ? "gold" : trx.orderType === "Walk-In" ? "ok" : "neutral"}>
+                        {trx.orderType}
+                      </Badge>
+                      <Badge tone={trx.status === "Lunas" ? "ok" : "danger"}>
+                        {trx.status}
+                      </Badge>
+                      <span className="text-xs text-text-muted">• {trx.timestamp}</span>
+                    </div>
+
+                    {/* Right Price & Payment Badge */}
+                    <div className="flex items-center gap-3">
+                      <Badge
+                        tone={
+                          trx.method === "Tunai"
+                            ? "ok"
+                            : trx.method === "QRIS"
+                            ? "gold"
+                            : "neutral"
+                        }
+                      >
+                        {trx.method}
+                      </Badge>
+                      <div className="font-mono text-lg font-bold text-ok">
+                        {formatRupiah(trx.total)}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Right Price & Payment Badge */}
-                  <div className="flex items-center gap-3">
-                    <Badge
-                      tone={
-                        trx.method === "Tunai"
-                          ? "ok"
-                          : trx.method === "QRIS"
-                          ? "gold"
-                          : "neutral"
-                      }
-                    >
-                      {trx.method}
-                    </Badge>
-                    <div className="font-mono text-lg font-bold text-ok">
-                      {formatRupiah(trx.total)}
+                  {/* Content Row */}
+                  <div className="mt-3 grid grid-cols-1 gap-2.5 border-t border-border/60 pt-3 text-xs sm:grid-cols-4">
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">PELANGGAN</div>
+                      <div className="mt-0.5 font-bold text-text">{trx.customerName}</div>
+                      <div className="text-[11px] text-text-muted">{trx.customerPhone}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">BARBER</div>
+                      <div className="mt-0.5 font-semibold text-text">✂️ {trx.barberName}</div>
+                    </div>
+
+                    <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                          ITEM LAYANAN &amp; PRODUK ({trx.itemCount} item)
+                        </div>
+                        <div className="mt-0.5 font-medium text-text">
+                          {trx.items.map((i) => `${i.name} (${i.qty}x)`).join(", ")}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTrx(trx)}
+                        className="cursor-pointer rounded border border-border bg-surface-2 px-3 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:border-gold-bright hover:text-gold-bright hover:bg-surface"
+                      >
+                        Lihat Struk 🔍
+                      </button>
                     </div>
                   </div>
                 </div>
+              ))}
 
-                {/* Content Row */}
-                <div className="mt-3 grid grid-cols-1 gap-2.5 border-t border-border/60 pt-3 text-xs sm:grid-cols-4">
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">PELANGGAN</div>
-                    <div className="mt-0.5 font-bold text-text">{trx.customerName}</div>
-                    <div className="text-[11px] text-text-muted">{trx.customerPhone}</div>
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 text-xs">
+                  <div className="text-text-muted">
+                    Menampilkan <span className="font-bold text-text">{currentPage * pageSize + 1}</span> - <span className="font-bold text-text">{Math.min((currentPage + 1) * pageSize, filteredTransactions.length)}</span> dari <span className="font-bold text-text">{filteredTransactions.length}</span> transaksi
                   </div>
-
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">BARBER</div>
-                    <div className="mt-0.5 font-semibold text-text">✂️ {trx.barberName}</div>
-                  </div>
-
-                  <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                        ITEM LAYANAN &amp; PRODUK ({trx.itemCount} item)
-                      </div>
-                      <div className="mt-0.5 font-medium text-text">
-                        {trx.items.map((i) => `${i.name} (${i.qty}x)`).join(", ")}
-                      </div>
-                    </div>
-
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setSelectedTrx(trx)}
-                      className="rounded border border-border bg-surface-2 px-3 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:border-gold-bright hover:text-gold-bright hover:bg-surface"
+                      disabled={currentPage === 0}
+                      onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                      className="cursor-pointer rounded border border-border bg-surface-2 px-3 py-1.5 font-semibold text-text transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      Lihat Struk 🔍
+                      ◀ Sebelumnya
+                    </button>
+                    <span className="font-mono font-bold text-gold-bright">
+                      Halaman {currentPage + 1} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={currentPage >= totalPages - 1}
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                      className="cursor-pointer rounded border border-border bg-surface-2 px-3 py-1.5 font-semibold text-text transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Selanjutnya ▶
                     </button>
                   </div>
                 </div>
-              </div>
-            ))
+              )}
+            </>
           )}
         </div>
       </div>

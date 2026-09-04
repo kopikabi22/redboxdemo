@@ -21,6 +21,11 @@ export default function ManajemenAssetsPage() {
   const [kondisiFilter, setKondisiFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editAsset, setEditAsset] = useState<typeof dummyAssets[0] | null>(null);
+
+  // Pagination state (Immutable .slice)
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
 
   useEffect(() => {
     if (!isClient) return;
@@ -71,6 +76,15 @@ export default function ManajemenAssetsPage() {
       return true;
     });
   }, [selectedBranchId, branches, kondisiFilter, searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedBranchId, kondisiFilter, searchQuery]);
+
+  const totalPages = Math.ceil(filteredAssets.length / pageSize) || 1;
+  const paginatedAssets = useMemo(() => {
+    return filteredAssets.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+  }, [filteredAssets, currentPage, pageSize]);
 
   function getKondisiBadge(kondisi: string) {
     switch (kondisi.toLowerCase()) {
@@ -160,13 +174,22 @@ export default function ManajemenAssetsPage() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 rounded bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-red-700"
-          >
-            <span>+ Tambah Aset Baru</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="cursor-pointer flex items-center gap-1.5 rounded border border-border bg-surface-2 px-3 py-2 text-xs font-semibold text-text transition-colors hover:bg-surface hover:border-gold-bright"
+            >
+              <span>🖨️ Cetak / Export</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="cursor-pointer flex items-center gap-1.5 rounded bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-red-700"
+            >
+              <span>+ Tambah Aset Baru</span>
+            </button>
+          </div>
         </div>
 
         {/* Data Table */}
@@ -181,17 +204,18 @@ export default function ManajemenAssetsPage() {
                 <th className="px-3.5 py-2.5">PENANGGUNG JAWAB (PIC)</th>
                 <th className="px-3.5 py-2.5">TANGGAL BELI</th>
                 <th className="px-3.5 py-2.5 text-center">KONDISI</th>
+                <th className="px-3.5 py-2.5 text-right">AKSI</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredAssets.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-text-faint">
+                  <td colSpan={8} className="py-10 text-center text-text-faint">
                     Tidak ada data aset yang sesuai dengan filter.
                   </td>
                 </tr>
               ) : (
-                filteredAssets.map((asset) => (
+                paginatedAssets.map((asset) => (
                   <tr key={asset.kode} className="hover:bg-surface-2/60">
                     <td className="px-3.5 py-2.5 font-mono font-bold text-gold-bright">{asset.kode}</td>
                     <td className="px-3.5 py-2.5 font-bold text-text">{asset.nama}</td>
@@ -200,11 +224,59 @@ export default function ManajemenAssetsPage() {
                     <td className="px-3.5 py-2.5 font-semibold text-text">{asset.pic}</td>
                     <td className="px-3.5 py-2.5 font-mono text-text-muted">{asset.tanggalBeli}</td>
                     <td className="px-3.5 py-2.5 text-center">{getKondisiBadge(asset.kondisi)}</td>
+                    <td className="px-3.5 py-2.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setEditAsset(asset)}
+                          className="cursor-pointer rounded border border-border bg-surface-2 px-2.5 py-1 text-xs font-semibold text-gold-bright transition-colors hover:bg-surface hover:text-white"
+                        >
+                          Ubah
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => alert('Fitur Hapus dinonaktifkan pada mode UAT Demo untuk melindungi integritas data.')}
+                          className="cursor-pointer rounded border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/20"
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+
+          {/* Pagination Toolbar */}
+          {totalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-2 px-4 py-3 text-xs">
+              <div className="text-text-muted">
+                Menampilkan <span className="font-bold text-text">{currentPage * pageSize + 1}</span> - <span className="font-bold text-text">{Math.min((currentPage + 1) * pageSize, filteredAssets.length)}</span> dari <span className="font-bold text-text">{filteredAssets.length}</span> aset
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage === 0}
+                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                  className="cursor-pointer rounded border border-border bg-surface px-3 py-1.5 font-semibold text-text transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  ◀ Sebelumnya
+                </button>
+                <span className="font-mono font-bold text-gold-bright">
+                  Halaman {currentPage + 1} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages - 1}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+                  className="cursor-pointer rounded border border-border bg-surface px-3 py-1.5 font-semibold text-text transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Selanjutnya ▶
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -284,6 +356,99 @@ export default function ManajemenAssetsPage() {
                   className="rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-sm transition-colors hover:bg-red-700"
                 >
                   Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit Aset */}
+      {editAsset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-text">Ubah Data Aset &amp; Alat Kerja</h3>
+                <p className="text-[11px] text-text-muted">Kode: <span className="font-mono text-gold-bright">{editAsset.kode}</span></p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditAsset(null)}
+                className="cursor-pointer rounded p-1 text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                alert("Perubahan data aset berhasil disimpan!");
+                setEditAsset(null);
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="mb-1 block font-bold text-text-muted">NAMA ASET <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  defaultValue={editAsset.nama}
+                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-text-faint focus:border-gold-bright focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block font-bold text-text-muted">KATEGORI <span className="text-red-500">*</span></label>
+                <select
+                  required
+                  defaultValue={editAsset.kategori}
+                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-text focus:border-gold-bright focus:outline-none"
+                >
+                  <option value="Peralatan Barbershop">Peralatan Barbershop</option>
+                  <option value="Furnitur &amp; Interior">Furnitur &amp; Interior</option>
+                  <option value="Elektronik &amp; IT">Elektronik &amp; IT</option>
+                  <option value="Sanitasi &amp; Sterilisasi">Sanitasi &amp; Sterilisasi</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block font-bold text-text-muted">PENANGGUNG JAWAB (PIC) <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  defaultValue={editAsset.pic}
+                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-text-faint focus:border-gold-bright focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block font-bold text-text-muted">KONDISI <span className="text-red-500">*</span></label>
+                <select
+                  required
+                  defaultValue={editAsset.kondisi}
+                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-text focus:border-gold-bright focus:outline-none"
+                >
+                  <option value="Baik">Baik</option>
+                  <option value="Service">Service</option>
+                  <option value="Rusak">Rusak</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditAsset(null)}
+                  className="cursor-pointer rounded-lg border border-border bg-surface-2 px-4 py-2 font-semibold text-text-muted transition-colors hover:bg-surface hover:text-text"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="cursor-pointer rounded-lg bg-gold-bright px-4 py-2 font-bold text-black shadow-sm transition-colors hover:bg-yellow-400"
+                >
+                  Simpan Perubahan
                 </button>
               </div>
             </form>
