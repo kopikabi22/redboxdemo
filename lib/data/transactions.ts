@@ -142,6 +142,14 @@ export function checkout(input: CheckoutInput): Transaction {
     transactions.push(transaction);
     writeCollection(StorageKeys.transactions, transactions);
 
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      try {
+        window.localStorage.setItem('redbox_transactions', JSON.stringify(transactions));
+      } catch (e) {
+        console.error('Gagal sinkronisasi redbox_transactions ke localStorage:', e);
+      }
+    }
+
     productItems.forEach((item) => {
       deductStockFEFO(item.itemId, input.branchId, item.qty);
       recordStockMove({
@@ -178,6 +186,13 @@ export function checkout(input: CheckoutInput): Transaction {
     return transaction;
   } catch (err) {
     writeCollection(StorageKeys.transactions, transactionsSnapshot);
+    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+      try {
+        window.localStorage.setItem('redbox_transactions', JSON.stringify(transactionsSnapshot));
+      } catch (e) {
+        // ignore
+      }
+    }
     writeCollection(StorageKeys.stockMoves, stockMovesSnapshot);
     writeCollection(StorageKeys.inventoryBalances, inventoryBalancesSnapshot);
     writeCollection(StorageKeys.productBatches, productBatchesSnapshot);
@@ -190,5 +205,22 @@ export function checkout(input: CheckoutInput): Transaction {
 }
 
 export function getTransactions(): Transaction[] {
-  return readCollection<Transaction>(StorageKeys.transactions);
+  const stored = readCollection<Transaction>(StorageKeys.transactions);
+  if (stored && stored.length > 0) return stored;
+
+  if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem('redbox_transactions');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed as Transaction[];
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return [];
 }

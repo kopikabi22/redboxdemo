@@ -148,6 +148,7 @@ export default function RiwayatTransaksiPage() {
   const [statusFilter, setStatusFilter] = useState<"Semua" | "Lunas" | "Void">("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTrx, setSelectedTrx] = useState<RiwayatItem | null>(null);
+  const [transactions, setTransactions] = useState<RiwayatItem[]>(DUMMY_RIWAYAT);
 
   useEffect(() => {
     if (!isClient) return;
@@ -156,6 +157,69 @@ export default function RiwayatTransaksiPage() {
     }
   }, [isClient, session, router]);
 
+  // Read transactions from localStorage redbox_transactions if available
+  useEffect(() => {
+    if (!isClient) return;
+    try {
+      const raw = localStorage.getItem("redbox_transactions");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const mapped: RiwayatItem[] = parsed.map((tx: any, idx: number) => {
+            const rawMethod = tx.method || "Tunai";
+            const method: RiwayatItem["method"] =
+              rawMethod === "Cash" || rawMethod === "Tunai"
+                ? "Tunai"
+                : rawMethod === "QRIS"
+                ? "QRIS"
+                : rawMethod === "Debit"
+                ? "Debit"
+                : "Transfer";
+
+            const items =
+              Array.isArray(tx.items) && tx.items.length > 0
+                ? tx.items.map((it: any) => ({
+                    name: it.name || "Layanan / Produk",
+                    qty: Number(it.qty) || 1,
+                    price: Number(it.price) || 0,
+                  }))
+                : [{ name: "Layanan POS", qty: 1, price: Number(tx.total) || 0 }];
+
+            const itemCount = items.reduce((sum: number, it: any) => sum + it.qty, 0);
+
+            const dateStr = tx.timestamp
+              ? new Date(tx.timestamp).toLocaleString("id-ID", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }) + " WIB"
+              : "01 Sep 2026, 12:00 WIB";
+
+            return {
+              id: tx.id || `KK-${idx + 1}`,
+              orderType: (tx.orderType || (tx.customer?.type === "member" ? "Booking" : "Walk-In")) as "Walk-In" | "Booking" | "Dine In",
+              timestamp: dateStr,
+              customerName: tx.customer?.name || "Pelanggan",
+              customerPhone: tx.customer?.phone || "-",
+              barberName: tx.cashierName || "Barber",
+              items,
+              itemCount,
+              total: Number(tx.total) || 0,
+              method,
+              status: (tx.status === "Void" ? "Void" : "Lunas") as "Lunas" | "Void",
+            };
+          });
+
+          setTransactions(mapped);
+        }
+      }
+    } catch (err) {
+      console.error("Gagal membaca data transaksi dari localStorage:", err);
+    }
+  }, [isClient]);
+
   function handleLogout() {
     clearSession("karyawan");
     router.replace("/login");
@@ -163,7 +227,7 @@ export default function RiwayatTransaksiPage() {
 
   // Filter Transactions
   const filteredTrxs = useMemo(() => {
-    return DUMMY_RIWAYAT.filter((item) => {
+    return transactions.filter((item) => {
       // Status filter
       if (statusFilter !== "Semua" && item.status !== statusFilter) {
         return false;
@@ -181,19 +245,55 @@ export default function RiwayatTransaksiPage() {
         );
       }
 
-
       return true;
     });
-  }, [statusFilter, searchQuery]);
+  }, [transactions, statusFilter, searchQuery]);
 
-  // Breakdown metrics specified by request
-  const tunaiTotal = 176000;
-  const qrisTotal = 339000;
-  const debitTotal = 55000;
-  const grandTotal = 570000;
-  const totalLunasCount = 14;
-  const totalItemsCount = 24;
-  const avgOrderValue = 40714;
+  // Breakdown metrics
+  const isCustomTransactions = transactions !== DUMMY_RIWAYAT;
+
+  const tunaiTotal = useMemo(() => {
+    if (!isCustomTransactions) return 176000;
+    return transactions
+      .filter((t) => t.method === "Tunai" && t.status === "Lunas")
+      .reduce((sum, t) => sum + t.total, 0);
+  }, [transactions, isCustomTransactions]);
+
+  const qrisTotal = useMemo(() => {
+    if (!isCustomTransactions) return 339000;
+    return transactions
+      .filter((t) => t.method === "QRIS" && t.status === "Lunas")
+      .reduce((sum, t) => sum + t.total, 0);
+  }, [transactions, isCustomTransactions]);
+
+  const debitTotal = useMemo(() => {
+    if (!isCustomTransactions) return 55000;
+    return transactions
+      .filter((t) => t.method === "Debit" && t.status === "Lunas")
+      .reduce((sum, t) => sum + t.total, 0);
+  }, [transactions, isCustomTransactions]);
+
+  const grandTotal = useMemo(() => {
+    if (!isCustomTransactions) return 570000;
+    return transactions
+      .filter((t) => t.status === "Lunas")
+      .reduce((sum, t) => sum + t.total, 0);
+  }, [transactions, isCustomTransactions]);
+
+  const totalLunasCount = useMemo(() => {
+    if (!isCustomTransactions) return 14;
+    return transactions.filter((t) => t.status === "Lunas").length;
+  }, [transactions, isCustomTransactions]);
+
+  const totalItemsCount = useMemo(() => {
+    if (!isCustomTransactions) return 24;
+    return transactions.reduce((sum, t) => sum + t.itemCount, 0);
+  }, [transactions, isCustomTransactions]);
+
+  const avgOrderValue = useMemo(() => {
+    if (!isCustomTransactions) return 40714;
+    return totalLunasCount > 0 ? Math.round(grandTotal / totalLunasCount) : 0;
+  }, [grandTotal, totalLunasCount, isCustomTransactions]);
 
   if (!employee) {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;

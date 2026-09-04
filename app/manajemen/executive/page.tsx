@@ -29,12 +29,47 @@ export default function ManajemenExecutivePage() {
 
   const [periodMonth, setPeriodMonth] = useState(() => todayDateString().slice(0, 7)); // e.g. "2026-08"
 
+  const [executiveStats, setExecutiveStats] = useState({
+    omzet: globalStats.omzet,
+    labaBersih: globalStats.labaBersih,
+    transaksi: globalStats.transaksi,
+    aov: globalStats.aov,
+    memberAktif: globalStats.memberAktif,
+  });
+
   useEffect(() => {
     if (!isClient) return;
     if (!session) {
       router.replace("/login");
     }
   }, [isClient, session, router]);
+
+  // Read redbox_transactions from localStorage if available
+  useEffect(() => {
+    if (!isClient) return;
+    try {
+      const raw = localStorage.getItem("redbox_transactions");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const totalRevenue = parsed.reduce((sum: number, tx: any) => sum + (Number(tx.total) || 0), 0);
+          const count = parsed.length;
+          const aov = count > 0 ? Math.round(totalRevenue / count) : 0;
+          const netProfit = Math.round(totalRevenue * 0.676);
+
+          setExecutiveStats({
+            omzet: totalRevenue,
+            labaBersih: netProfit,
+            transaksi: count,
+            aov,
+            memberAktif: globalStats.memberAktif,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Gagal membaca data redbox_transactions di Executive Dashboard:", err);
+    }
+  }, [isClient]);
 
   function handleLogout() {
     clearSession("manajemen");
@@ -109,7 +144,7 @@ export default function ManajemenExecutivePage() {
               Holding Net Revenue (Omzet)
             </div>
             <div className="mt-1 font-mono text-2xl font-black text-gold-bright">
-              {formatRupiah(globalStats.omzet)}
+              {formatRupiah(executiveStats.omzet)}
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Laba Kotor: {formatRupiah(dummyPnL.grossProfit)}</span>
@@ -123,7 +158,7 @@ export default function ManajemenExecutivePage() {
               Laba Bersih Konsolidasi
             </div>
             <div className={`mt-1 font-mono text-2xl font-black text-ok`}>
-              {formatRupiah(globalStats.labaBersih)}
+              {formatRupiah(executiveStats.labaBersih)}
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Net Margin:</span>
@@ -139,11 +174,11 @@ export default function ManajemenExecutivePage() {
               Transaksi &amp; Nilai Rata-rata
             </div>
             <div className="mt-1 font-mono text-2xl font-black text-text">
-              {globalStats.transaksi} <span className="text-xs font-normal text-text-muted">transaksi</span>
+              {executiveStats.transaksi} <span className="text-xs font-normal text-text-muted">transaksi</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Rata-rata / AOV:</span>
-              <span className="font-mono font-bold text-gold-bright">{formatRupiah(globalStats.aov)}</span>
+              <span className="font-mono font-bold text-gold-bright">{formatRupiah(executiveStats.aov)}</span>
             </div>
           </div>
 
@@ -153,12 +188,12 @@ export default function ManajemenExecutivePage() {
               Pelanggan &amp; Member Aktif
             </div>
             <div className="mt-1 font-mono text-2xl font-black text-text">
-              {Math.round(globalStats.memberAktif / 0.65)} <span className="text-xs font-normal text-text-muted">konsumen</span>
+              {Math.round(executiveStats.memberAktif / 0.65)} <span className="text-xs font-normal text-text-muted">konsumen</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span>Member Terdaftar:</span>
               <span className="font-bold text-gold-bright">
-                {globalStats.memberAktif} (65%)
+                {executiveStats.memberAktif} (65%)
               </span>
             </div>
           </div>

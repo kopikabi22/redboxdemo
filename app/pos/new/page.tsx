@@ -24,6 +24,7 @@ import {
   validateAndCalculatePromo,
   getCompletedUnpaidAppointments,
   markAppointmentPaid,
+  getTransactions,
 } from "@/lib/data";
 import type {
   Service,
@@ -653,6 +654,16 @@ export default function PosNewPage() {
             cashTendered,
             appliedPromo: totals.discount > 0 ? appliedPromo : null,
           });
+
+          if (typeof window !== "undefined") {
+            try {
+              const updatedTransactions = getTransactions();
+              localStorage.setItem("redbox_transactions", JSON.stringify(updatedTransactions));
+            } catch (err) {
+              console.error("Gagal menyimpan redbox_transactions ke localStorage:", err);
+            }
+          }
+
           if (activeAppointmentId) {
             try {
               markAppointmentPaid(activeAppointmentId, transaction.id);
