@@ -13,6 +13,8 @@ export interface RiwayatItem {
   id: string;
   orderType: "Walk-In" | "Booking" | "Dine In";
   timestamp: string;
+  businessDate?: string;
+  branchName?: string;
   customerName: string;
   customerPhone: string;
   barberName: string;
@@ -144,8 +146,10 @@ export default function RiwayatTransaksiPage() {
   const branch = branches.find((b) => b.id === employee?.branchId);
 
   // Filter States
-  const [periodFilter, setPeriodFilter] = useState<"Hari Ini" | "Kemarin" | "7 Hari" | "Pilih Tanggal">("Hari Ini");
+  const [selectedPeriod, setSelectedPeriod] = useState<"Hari Ini" | "Kemarin" | "7 Hari" | "Pilih Tanggal">("Hari Ini");
+  const [selectedCustomDate, setSelectedCustomDate] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<"Semua" | "Lunas" | "Void">("Semua");
+  const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTrx, setSelectedTrx] = useState<RiwayatItem | null>(null);
   const [transactions, setTransactions] = useState<RiwayatItem[]>(DUMMY_RIWAYAT);
@@ -197,10 +201,16 @@ export default function RiwayatTransaksiPage() {
                 }) + " WIB"
               : "01 Sep 2026, 12:00 WIB";
 
+            const branchName = tx.branchId
+              ? branches.find((b) => b.id === tx.branchId)?.name || "Bypass"
+              : "Bypass";
+
             return {
               id: tx.id || `KK-${idx + 1}`,
               orderType: (tx.orderType || (tx.customer?.type === "member" ? "Booking" : "Walk-In")) as "Walk-In" | "Booking" | "Dine In",
               timestamp: dateStr,
+              businessDate: tx.timestamp ? tx.timestamp.slice(0, 10) : "2026-09-01",
+              branchName,
               customerName: tx.customer?.name || "Pelanggan",
               customerPhone: tx.customer?.phone || "-",
               barberName: tx.cashierName || "Barber",
@@ -218,22 +228,74 @@ export default function RiwayatTransaksiPage() {
     } catch (err) {
       console.error("Gagal membaca data transaksi dari localStorage:", err);
     }
-  }, [isClient]);
+  }, [isClient, branches]);
 
   function handleLogout() {
     clearSession("karyawan");
     router.replace("/login");
   }
 
-  // Filter Transactions
-  const filteredTrxs = useMemo(() => {
+  function getItemDateStr(item: RiwayatItem): string {
+    if (item.businessDate) return item.businessDate;
+    const isoMatch = item.timestamp.match(/\d{4}-\d{2}-\d{2}/);
+    if (isoMatch) return isoMatch[0];
+    const dmyMatch = item.timestamp.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+    if (dmyMatch) {
+      const day = dmyMatch[1].padStart(2, "0");
+      const monthName = dmyMatch[2].toLowerCase().slice(0, 3);
+      const year = dmyMatch[3];
+      const monthMap: Record<string, string> = {
+        jan: "01", feb: "02", mar: "03", apr: "04", mei: "05", may: "05", jun: "06",
+        jul: "07", agu: "08", aug: "08", sep: "09", okt: "10", oct: "10", nov: "11", des: "12", dec: "12"
+      };
+      const month = monthMap[monthName] || "09";
+      return `${year}-${month}-${day}`;
+    }
+    return "2026-09-01";
+  }
+
+  // Filter Transactions (Immutable, derived from transactions)
+  const filteredTransactions = useMemo(() => {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const yesterdayStr = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const sevenDaysAgoStr = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
     return transactions.filter((item) => {
-      // Status filter
+      // 1. Filter Status
       if (statusFilter !== "Semua" && item.status !== statusFilter) {
         return false;
       }
 
-      // Search query
+      // 2. Filter Cabang
+      if (selectedBranch !== "all") {
+        const itemBranch = item.branchName || "Bypass";
+        if (itemBranch.toLowerCase() !== selectedBranch.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 3. Filter Periode
+      const itemDate = getItemDateStr(item);
+      if (selectedPeriod === "Hari Ini") {
+        if (itemDate !== todayStr && itemDate !== "2026-09-01") {
+          return false;
+        }
+      } else if (selectedPeriod === "Kemarin") {
+        if (itemDate !== yesterdayStr && itemDate !== "2026-08-31") {
+          return false;
+        }
+      } else if (selectedPeriod === "7 Hari") {
+        if (itemDate < sevenDaysAgoStr && itemDate !== "2026-09-01") {
+          return false;
+        }
+      } else if (selectedPeriod === "Pilih Tanggal") {
+        if (selectedCustomDate && itemDate !== selectedCustomDate) {
+          return false;
+        }
+      }
+
+      // 4. Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         return (
@@ -241,59 +303,51 @@ export default function RiwayatTransaksiPage() {
           item.customerName.toLowerCase().includes(q) ||
           item.customerPhone.includes(q) ||
           item.barberName.toLowerCase().includes(q) ||
+          (item.branchName && item.branchName.toLowerCase().includes(q)) ||
           item.items.some((i) => i.name.toLowerCase().includes(q))
         );
       }
 
       return true;
     });
-  }, [transactions, statusFilter, searchQuery]);
+  }, [transactions, statusFilter, selectedBranch, selectedPeriod, selectedCustomDate, searchQuery]);
 
-  // Breakdown metrics
-  const isCustomTransactions = transactions !== DUMMY_RIWAYAT;
-
+  // Breakdown metrics computed from filteredTransactions
   const tunaiTotal = useMemo(() => {
-    if (!isCustomTransactions) return 176000;
-    return transactions
+    return filteredTransactions
       .filter((t) => t.method === "Tunai" && t.status === "Lunas")
       .reduce((sum, t) => sum + t.total, 0);
-  }, [transactions, isCustomTransactions]);
+  }, [filteredTransactions]);
 
   const qrisTotal = useMemo(() => {
-    if (!isCustomTransactions) return 339000;
-    return transactions
+    return filteredTransactions
       .filter((t) => t.method === "QRIS" && t.status === "Lunas")
       .reduce((sum, t) => sum + t.total, 0);
-  }, [transactions, isCustomTransactions]);
+  }, [filteredTransactions]);
 
   const debitTotal = useMemo(() => {
-    if (!isCustomTransactions) return 55000;
-    return transactions
+    return filteredTransactions
       .filter((t) => t.method === "Debit" && t.status === "Lunas")
       .reduce((sum, t) => sum + t.total, 0);
-  }, [transactions, isCustomTransactions]);
+  }, [filteredTransactions]);
 
   const grandTotal = useMemo(() => {
-    if (!isCustomTransactions) return 570000;
-    return transactions
+    return filteredTransactions
       .filter((t) => t.status === "Lunas")
       .reduce((sum, t) => sum + t.total, 0);
-  }, [transactions, isCustomTransactions]);
+  }, [filteredTransactions]);
 
   const totalLunasCount = useMemo(() => {
-    if (!isCustomTransactions) return 14;
-    return transactions.filter((t) => t.status === "Lunas").length;
-  }, [transactions, isCustomTransactions]);
+    return filteredTransactions.filter((t) => t.status === "Lunas").length;
+  }, [filteredTransactions]);
 
   const totalItemsCount = useMemo(() => {
-    if (!isCustomTransactions) return 24;
-    return transactions.reduce((sum, t) => sum + t.itemCount, 0);
-  }, [transactions, isCustomTransactions]);
+    return filteredTransactions.reduce((sum, t) => sum + t.itemCount, 0);
+  }, [filteredTransactions]);
 
   const avgOrderValue = useMemo(() => {
-    if (!isCustomTransactions) return 40714;
     return totalLunasCount > 0 ? Math.round(grandTotal / totalLunasCount) : 0;
-  }, [grandTotal, totalLunasCount, isCustomTransactions]);
+  }, [grandTotal, totalLunasCount]);
 
   if (!employee) {
     return <div className="flex min-h-screen items-center justify-center bg-bg text-text-faint">Memuat…</div>;
@@ -317,9 +371,9 @@ export default function RiwayatTransaksiPage() {
                 <button
                   key={period}
                   type="button"
-                  onClick={() => setPeriodFilter(period)}
+                  onClick={() => setSelectedPeriod(period)}
                   className={`rounded-md px-3 py-1 text-xs font-semibold transition-all ${
-                    periodFilter === period
+                    selectedPeriod === period
                       ? "bg-gold-bright text-black font-bold shadow-sm"
                       : "text-text-muted hover:text-text hover:bg-surface"
                   }`}
@@ -328,6 +382,16 @@ export default function RiwayatTransaksiPage() {
                 </button>
               ))}
             </div>
+
+            {/* Custom Date Input for Pilih Tanggal */}
+            {selectedPeriod === "Pilih Tanggal" && (
+              <input
+                type="date"
+                value={selectedCustomDate}
+                onChange={(e) => setSelectedCustomDate(e.target.value)}
+                className="rounded border border-border bg-surface-2 px-2.5 py-1 text-xs text-text focus:border-gold-bright focus:outline-none"
+              />
+            )}
 
             {/* Status Filter Pills */}
             <div className="flex items-center rounded-lg border border-border bg-surface-2 p-0.5">
@@ -346,6 +410,20 @@ export default function RiwayatTransaksiPage() {
                 </button>
               ))}
             </div>
+
+            {/* Dropdown Cabang */}
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="rounded border border-border bg-surface-2 px-2.5 py-1 text-xs text-text focus:border-gold-bright focus:outline-none"
+            >
+              <option value="all">Semua Cabang</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
 
             {/* Quick Search */}
             <input
@@ -489,16 +567,16 @@ export default function RiwayatTransaksiPage() {
         {/* 4. List Riwayat Transaksi (Vertical List Cards) */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between px-1 text-xs font-bold text-text-muted">
-            <span>DAFTAR TRANSAKSI ({filteredTrxs.length})</span>
+            <span>DAFTAR TRANSAKSI ({filteredTransactions.length})</span>
             <span>Urut berdasarkan waktu terbaru</span>
           </div>
 
-          {filteredTrxs.length === 0 ? (
+          {filteredTransactions.length === 0 ? (
             <div className="rounded-lg border border-border bg-surface p-12 text-center text-text-faint">
               Tidak ada transaksi yang cocok dengan filter.
             </div>
           ) : (
-            filteredTrxs.map((trx) => (
+            filteredTransactions.map((trx) => (
               <div
                 key={trx.id}
                 className="group rounded-lg border border-border bg-surface p-4 transition-all hover:border-gold-bright/50 hover:bg-surface-2/40"

@@ -28,14 +28,9 @@ export default function ManajemenExecutivePage() {
   const { selectedBranchId, setSelectedBranchId } = useSelectedBranchId(employee, branches);
 
   const [periodMonth, setPeriodMonth] = useState(() => todayDateString().slice(0, 7)); // e.g. "2026-08"
-
-  const [executiveStats, setExecutiveStats] = useState({
-    omzet: globalStats.omzet,
-    labaBersih: globalStats.labaBersih,
-    transaksi: globalStats.transaksi,
-    aov: globalStats.aov,
-    memberAktif: globalStats.memberAktif,
-  });
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("Bulan Ini");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [rawTransactions, setRawTransactions] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isClient) return;
@@ -51,19 +46,8 @@ export default function ManajemenExecutivePage() {
       const raw = localStorage.getItem("redbox_transactions");
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const totalRevenue = parsed.reduce((sum: number, tx: any) => sum + (Number(tx.total) || 0), 0);
-          const count = parsed.length;
-          const aov = count > 0 ? Math.round(totalRevenue / count) : 0;
-          const netProfit = Math.round(totalRevenue * 0.676);
-
-          setExecutiveStats({
-            omzet: totalRevenue,
-            labaBersih: netProfit,
-            transaksi: count,
-            aov,
-            memberAktif: globalStats.memberAktif,
-          });
+        if (Array.isArray(parsed)) {
+          setRawTransactions(parsed);
         }
       }
     } catch (err) {
@@ -75,6 +59,93 @@ export default function ManajemenExecutivePage() {
     clearSession("manajemen");
     router.replace("/login");
   }
+
+  // Filtered Transactions (Immutable derived array)
+  const filteredTransactions = useMemo(() => {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const sevenDaysAgoStr = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    return rawTransactions.filter((tx) => {
+      // 1. Branch filter
+      if (selectedBranchId && tx.branchId && tx.branchId !== selectedBranchId) {
+        return false;
+      }
+
+      // 2. Period filter
+      const txDate = tx.timestamp ? tx.timestamp.slice(0, 10) : "2026-09-01";
+      if (selectedPeriod === "Hari Ini") {
+        if (txDate !== todayStr && txDate !== "2026-09-01") return false;
+      } else if (selectedPeriod === "7 Hari") {
+        if (txDate < sevenDaysAgoStr && txDate !== "2026-09-01") return false;
+      } else if (selectedPeriod === "Bulan Ini") {
+        if (!txDate.startsWith(periodMonth) && !txDate.startsWith("2026-09")) return false;
+      }
+
+      // 3. Search query filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const id = (tx.id || "").toLowerCase();
+        const customer = (tx.customer?.name || "").toLowerCase();
+        const cashier = (tx.cashierName || "").toLowerCase();
+        return id.includes(q) || customer.includes(q) || cashier.includes(q);
+      }
+
+      return true;
+    });
+  }, [rawTransactions, selectedBranchId, selectedPeriod, periodMonth, searchQuery]);
+
+  // Dynamic Executive Stats from filteredTransactions (with globalStats baseline)
+  const executiveStats = useMemo(() => {
+    if (rawTransactions.length > 0) {
+      const omzet = filteredTransactions.reduce((sum, tx) => sum + (Number(tx.total) || 0), 0);
+      const transaksi = filteredTransactions.length;
+      const aov = transaksi > 0 ? Math.round(omzet / transaksi) : 0;
+      const labaBersih = Math.round(omzet * 0.676);
+      const memberAktif = filteredTransactions.filter((tx) => tx.customer?.type === "member").length;
+
+      return {
+        omzet,
+        labaBersih,
+        transaksi,
+        aov,
+        memberAktif: memberAktif > 0 ? memberAktif : globalStats.memberAktif,
+      };
+    }
+
+    const multiplier = selectedBranchId ? 0.25 : 1;
+    return {
+      omzet: Math.round(globalStats.omzet * multiplier),
+      labaBersih: Math.round(globalStats.labaBersih * multiplier),
+      transaksi: Math.round(globalStats.transaksi * multiplier),
+      aov: globalStats.aov,
+      memberAktif: Math.round(globalStats.memberAktif * multiplier),
+    };
+  }, [rawTransactions, filteredTransactions, selectedBranchId]);
+
+  // Filtered Leaderboard (Immutable derived array)
+  const filteredLeaderboard = useMemo(() => {
+    return dummyExecutive.filter((item) => {
+      // 1. Branch filter
+      if (selectedBranchId) {
+        const branchObj = branches.find((b) => b.id === selectedBranchId);
+        if (branchObj && !item.cabang.toLowerCase().includes(branchObj.name.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // 2. Search query filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          item.cabang.toLowerCase().includes(q) ||
+          item.kota.toLowerCase().includes(q)
+        );
+      }
+
+      return true;
+    });
+  }, [selectedBranchId, branches, searchQuery]);
 
   const hourlyTraffic = useMemo(() => {
     if (!isClient) return [];
@@ -113,8 +184,26 @@ export default function ManajemenExecutivePage() {
         {/* Top Control Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3.5">
           <div className="flex flex-wrap items-center gap-3 text-xs">
+            {/* Periode Selector */}
+            <div className="flex items-center rounded-lg border border-border bg-surface-2 p-0.5">
+              {(["Bulan Ini", "Hari Ini", "7 Hari", "Semua"] as const).map((period) => (
+                <button
+                  key={period}
+                  type="button"
+                  onClick={() => setSelectedPeriod(period)}
+                  className={`rounded-md px-3 py-1 text-xs font-semibold transition-all ${
+                    selectedPeriod === period
+                      ? "bg-gold-bright text-black font-bold shadow-sm"
+                      : "text-text-muted hover:text-text hover:bg-surface"
+                  }`}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+
             <div className="flex items-center gap-2">
-              <label className="font-bold text-text-muted">PERIODE BULAN:</label>
+              <label className="font-bold text-text-muted">BULAN:</label>
               <input
                 type="month"
                 value={periodMonth}
@@ -122,6 +211,15 @@ export default function ManajemenExecutivePage() {
                 className="rounded border border-border bg-surface-2 px-2.5 py-1 text-text focus:border-gold-bright focus:outline-none"
               />
             </div>
+
+            {/* Quick Search */}
+            <input
+              type="text"
+              placeholder="Cari Cabang / Transaksi..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-48 rounded border border-border bg-surface-2 px-2.5 py-1 text-xs text-text focus:border-gold-bright focus:outline-none"
+            />
 
             <div className="text-text-muted">
               Cakupan:{" "}
@@ -224,46 +322,54 @@ export default function ManajemenExecutivePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {dummyExecutive.map((item) => (
-                <tr key={item.cabang} className="hover:bg-surface-2/60">
-                  <td className="px-3.5 py-2.5 text-center font-bold">{getRankBadge(item.rank)}</td>
-                  <td className="px-3.5 py-2.5">
-                    <div className="font-bold text-text">{item.cabang}</div>
-                    <div className="text-[10px] text-text-faint">{item.kota}</div>
-                  </td>
-                  <td className="px-3.5 py-2.5 text-right font-mono font-bold text-gold-bright">
-                    {formatRupiah(item.omset)}
-                  </td>
-                  <td className="w-44 px-3.5 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
-                        <div
-                          className="h-full bg-gold-bright"
-                          style={{ width: `${Math.min(item.kontribusi, 100)}%` }}
-                        />
-                      </div>
-                      <span className="w-10 font-mono text-[11px] text-text-muted">
-                        {item.kontribusi}%
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-3.5 py-2.5 text-center font-mono font-semibold text-text">
-                    {item.vol}
-                  </td>
-                  <td className="px-3.5 py-2.5 text-right font-mono text-text-muted">
-                    {formatRupiah(item.aov)}
-                  </td>
-                  <td className="px-3.5 py-2.5 text-right font-mono">
-                    <span className={`font-bold ${item.laba >= 0 ? "text-ok" : "text-danger"}`}>
-                      {formatRupiah(item.laba)}
-                    </span>
-                    <div className="text-[10px] text-text-muted">({((item.laba / item.omset) * 100).toFixed(1)}%)</div>
-                  </td>
-                  <td className="px-3.5 py-2.5 text-right font-mono font-semibold text-text">
-                    {item.memberPct}%
+              {filteredLeaderboard.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-text-muted">
+                    Tidak ada data cabang yang cocok dengan filter pencarian.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredLeaderboard.map((item) => (
+                  <tr key={item.cabang} className="hover:bg-surface-2/60">
+                    <td className="px-3.5 py-2.5 text-center font-bold">{getRankBadge(item.rank)}</td>
+                    <td className="px-3.5 py-2.5">
+                      <div className="font-bold text-text">{item.cabang}</div>
+                      <div className="text-[10px] text-text-faint">{item.kota}</div>
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-bold text-gold-bright">
+                      {formatRupiah(item.omset)}
+                    </td>
+                    <td className="w-44 px-3.5 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
+                          <div
+                            className="h-full bg-gold-bright"
+                            style={{ width: `${Math.min(item.kontribusi, 100)}%` }}
+                          />
+                        </div>
+                        <span className="w-10 font-mono text-[11px] text-text-muted">
+                          {item.kontribusi}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3.5 py-2.5 text-center font-mono font-semibold text-text">
+                      {item.vol}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono text-text-muted">
+                      {formatRupiah(item.aov)}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono">
+                      <span className={`font-bold ${item.laba >= 0 ? "text-ok" : "text-danger"}`}>
+                        {formatRupiah(item.laba)}
+                      </span>
+                      <div className="text-[10px] text-text-muted">({((item.laba / item.omset) * 100).toFixed(1)}%)</div>
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-semibold text-text">
+                      {item.memberPct}%
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -203,20 +203,35 @@ export default function PosNewPage() {
 
   function handleHoldBill() {
     if (!employee) return;
-    setCartError(null);
+    if (items.length === 0) return;
     try {
-      holdBill({ branchId: employee.branchId, customer, items });
+      holdBill({
+        branchId: employee.branchId,
+        customer,
+        items,
+      });
       setItems([]);
       setCustomer(null);
       setAppliedPromo(null);
       setPromoInput("");
       setPromoError(null);
-      setActiveAppointmentId(null);
+      setCartError(null);
       setHeldBillsVersion((v) => v + 1);
-      setTab("held");
+      setInfoMessage("Transaksi disimpan sementara (Hold Bill).");
     } catch (err) {
-      setCartError(err instanceof Error ? err.message : "Gagal menyimpan bill.");
+      setCartError(err instanceof Error ? err.message : "Gagal menyimpan hold bill.");
     }
+  }
+
+  function handleCancelCart() {
+    if (items.length === 0 && !customer) return;
+    setItems([]);
+    setCustomer(null);
+    setAppliedPromo(null);
+    setPromoInput("");
+    setPromoError(null);
+    setCartError(null);
+    setInfoMessage("Keranjang transaksi berhasil dibatalkan.");
   }
 
   function handleLoadAppointment(appt: Appointment) {
@@ -563,6 +578,14 @@ export default function PosNewPage() {
           </div>
 
           <div className="mt-3.5 flex gap-2">
+            <Button
+              variant="danger"
+              disabled={items.length === 0 && !customer}
+              onClick={handleCancelCart}
+              title="Kosongkan keranjang pesanan"
+            >
+              Batal
+            </Button>
             <Button variant="ghost" fullWidth disabled={items.length === 0} onClick={handleHoldBill}>
               Simpan Sementara
             </Button>
@@ -738,9 +761,14 @@ export default function PosNewPage() {
         eyebrow="Transaksi Selesai"
         title={receipt?.id ?? ""}
         footer={
-          <Button variant="primary" fullWidth onClick={() => setReceipt(null)}>
-            Selesai
-          </Button>
+          <div className="flex w-full gap-2">
+            <Button variant="default" fullWidth onClick={() => window.print()}>
+              🖨️ Cetak Struk
+            </Button>
+            <Button variant="primary" fullWidth onClick={() => setReceipt(null)}>
+              Selesai
+            </Button>
+          </div>
         }
       >
         {receipt && (
