@@ -20,6 +20,7 @@ export default function ManajemenAssetsPage() {
 
   const [kondisiFilter, setKondisiFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isClient) return;
@@ -161,6 +162,7 @@ export default function ManajemenAssetsPage() {
 
           <button
             type="button"
+            onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-1.5 rounded bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-red-700"
           >
             <span>+ Tambah Aset Baru</span>
@@ -205,6 +207,89 @@ export default function ManajemenAssetsPage() {
           </table>
         </div>
       </div>
+
+      {/* Modal Tambah Aset Baru */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-text">Tambah Aset &amp; Alat Kerja Baru</h3>
+                <p className="text-[11px] text-text-muted">Masukkan data inventaris peralatan cabang</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="rounded p-1 text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                alert("Aset berhasil ditambahkan ke dalam sistem!");
+                setIsModalOpen(false);
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="mb-1 block font-bold text-text-muted">NAMA ASET <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Clipper Cordless Gold Edition"
+                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-text-faint focus:border-gold-bright focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block font-bold text-text-muted">KATEGORI <span className="text-red-500">*</span></label>
+                <select
+                  required
+                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-text focus:border-gold-bright focus:outline-none"
+                >
+                  <option value="Peralatan Barbershop">Peralatan Barbershop</option>
+                  <option value="Furnitur &amp; Interior">Furnitur &amp; Interior</option>
+                  <option value="Elektronik &amp; IT">Elektronik &amp; IT</option>
+                  <option value="Sanitasi &amp; Sterilisasi">Sanitasi &amp; Sterilisasi</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block font-bold text-text-muted">PENANGGUNG JAWAB (PIC) <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Budi (Barber Leader)"
+                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-text-faint focus:border-gold-bright focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-lg border border-border bg-surface-2 px-4 py-2 font-semibold text-text-muted transition-colors hover:bg-surface hover:text-text"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    alert("Aset berhasil ditambahkan ke dalam sistem!");
+                    setIsModalOpen(false);
+                  }}
+                  className="rounded-lg bg-red-600 px-4 py-2 font-bold text-white shadow-sm transition-colors hover:bg-red-700"
+                >
+                  Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </ManajemenShell>
   );
 }

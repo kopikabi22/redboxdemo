@@ -256,11 +256,11 @@ describe('Expiry Management & FEFO Data Layer', () => {
   describe('Integration with POS Checkout', () => {
     it('deducts batch stock via FEFO upon successful checkout', () => {
       createProductBatch(
-        { productId: PRODUCT_ID, branchId: BRANCH_ID, batchNumber: 'BATCH-POS-1', expiryDate: '2026-09-01', initialQty: 5, cost: 40000 },
+        { productId: PRODUCT_ID, branchId: BRANCH_ID, batchNumber: 'BATCH-POS-1', expiryDate: '2027-09-01', initialQty: 5, cost: 40000 },
         mockManager,
       );
       createProductBatch(
-        { productId: PRODUCT_ID, branchId: BRANCH_ID, batchNumber: 'BATCH-POS-2', expiryDate: '2026-12-01', initialQty: 10, cost: 40000 },
+        { productId: PRODUCT_ID, branchId: BRANCH_ID, batchNumber: 'BATCH-POS-2', expiryDate: '2027-12-01', initialQty: 10, cost: 40000 },
         mockManager,
       );
 
