@@ -124,7 +124,7 @@ export function AppShell({
 
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-[240px_1fr]">
-      <aside className="flex flex-col border-r border-border bg-bg-raised md:sticky md:top-0 md:h-screen">
+      <aside className="flex flex-col border-r border-border bg-bg-raised shadow-xs md:sticky md:top-0 md:h-screen">
         <div className="border-b border-border px-4 pb-3 pt-5">
           <Image src="/logo-redbox.png" alt="RedBox Logo" width={140} height={45} className="object-contain" />
           <div className="mt-1 text-[10px] uppercase tracking-wide text-text-faint">POV Karyawan</div>
@@ -150,7 +150,7 @@ export function AppShell({
                       className={`flex items-center gap-2.5 rounded-md border-l-2 px-2.5 py-2 text-[13px] font-semibold transition-colors ${
                         isActive
                           ? "border-gold-bright bg-surface-2 font-bold text-gold-bright shadow-sm"
-                          : "border-transparent text-text-muted hover:bg-surface hover:text-text"
+                          : "border-transparent text-text-muted hover:bg-surface-2 hover:text-text"
                       }`}
                     >
                       {item.label}
@@ -169,21 +169,21 @@ export function AppShell({
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3.5 border-b border-border bg-bg-raised px-6 py-3.5">
-          <div className="font-display text-[22px] tracking-wide">{pageTitle}</div>
+      <div className="flex min-h-screen flex-col bg-bg">
+        <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3.5 border-b border-border bg-bg-raised px-6 py-3.5 shadow-xs">
+          <div className="font-display text-[22px] tracking-wide text-text">{pageTitle}</div>
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-bold text-gold-bright">
+            <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-bold text-gold-bright shadow-xs">
               Cabang {branch?.name ?? "—"}
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-text-muted">
-              <span className="inline-block h-5 w-5 rounded-full bg-red" />
+            <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-text-muted shadow-xs">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red text-[10px] font-bold text-white">R</span>
               {employee.name} · {employee.role}
             </div>
           </div>
         </header>
 
-        <main className="flex-1 px-6 pb-16 pt-5">{children}</main>
+        <main className="flex-1 bg-bg px-6 pb-16 pt-5">{children}</main>
       </div>
     </div>
   );

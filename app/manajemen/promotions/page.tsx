@@ -211,7 +211,7 @@ export default function PromotionsManagementPage() {
                   <td className="px-3 py-2 text-text-muted">{pr.kuota}</td>
                   <td className="px-3 py-2">{pr.periode}</td>
                   <td className="px-3 py-2">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${pr.status === 'Aktif' ? 'bg-ok/10 text-ok' : 'bg-neutral-800 text-text-muted'}`}>{pr.status}</span>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${pr.status === 'Aktif' ? 'bg-ok/10 text-ok border border-ok/25' : 'bg-surface-2 text-text-muted border border-border'}`}>{pr.status}</span>
                   </td>
                   <td className="px-3 py-2 text-right"><button className="text-gold-bright">Edit</button></td>
                 </tr>

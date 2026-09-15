@@ -269,7 +269,7 @@ export function ManajemenShell({
 
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-[255px_1fr]">
-      <aside className="flex flex-col border-r border-border bg-bg-raised md:sticky md:top-0 md:h-screen">
+      <aside className="flex flex-col border-r border-border bg-bg-raised shadow-xs md:sticky md:top-0 md:h-screen">
         <div className="border-b border-border px-4 pb-3 pt-5">
           <Image src="/logo-redbox.png" alt="RedBox Logo" width={140} height={45} className="object-contain" />
           <div className="mt-1 text-[10px] uppercase tracking-wide text-text-faint">POV Manajemen · Back-Office</div>
@@ -281,12 +281,12 @@ export function ManajemenShell({
             const hasActiveItem = isGroupActive(group.id) || group.items.some((item) => isItemActive(item));
 
             return (
-              <div key={group.id} className="rounded-lg border border-border/40 bg-surface/40">
+              <div key={group.id} className="rounded-lg border border-border bg-surface shadow-xs">
                 {/* Accordion Header */}
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.id)}
-                  className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold transition-all hover:bg-surface-2/60 ${
+                  className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold transition-all hover:bg-surface-2 ${
                     hasActiveItem ? "text-gold-bright" : "text-text"
                   }`}
                 >
@@ -302,7 +302,7 @@ export function ManajemenShell({
 
                 {/* Sub-items list */}
                 {isOpen && (
-                  <div className="space-y-0.5 border-t border-border/30 px-1.5 py-1.5">
+                  <div className="space-y-0.5 border-t border-border/60 px-1.5 py-1.5 bg-surface-2/40">
                     {group.items.map((item) => {
                       const isActive = isItemActive(item);
                       return (
@@ -311,7 +311,7 @@ export function ManajemenShell({
                           href={item.href}
                           className={`flex items-center gap-2 rounded-md border-l-2 px-2.5 py-1.5 text-xs font-medium transition-colors ${
                             isActive
-                              ? "border-gold-bright bg-surface-2 font-bold text-gold-bright shadow-sm"
+                              ? "border-gold-bright bg-surface font-bold text-gold-bright shadow-xs"
                               : "border-transparent text-text-muted hover:bg-surface-2 hover:text-text"
                           }`}
                         >
@@ -333,11 +333,11 @@ export function ManajemenShell({
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3.5 border-b border-border bg-bg-raised px-6 py-3.5">
-          <div className="font-display text-[22px] tracking-wide">{pageTitle}</div>
+      <div className="flex min-h-screen flex-col bg-bg">
+        <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3.5 border-b border-border bg-bg-raised px-6 py-3.5 shadow-xs">
+          <div className="font-display text-[22px] tracking-wide text-text">{pageTitle}</div>
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-gold-bright">
+            <div className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-gold-bright shadow-xs">
               <span className="text-text-muted">Cabang:</span>
               <select
                 value={currentBranchId}
@@ -351,14 +351,14 @@ export function ManajemenShell({
                 ))}
               </select>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-text-muted">
-              <span className="inline-block h-5 w-5 rounded-full bg-red" />
+            <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-text-muted shadow-xs">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red text-[10px] font-bold text-white">R</span>
               {activeEmployee?.name ?? "Staff"} · {activeEmployee?.role === "Owner" ? "Owner/HQ" : activeEmployee?.role === "Finance" ? "Finance" : activeEmployee?.role === "Admin" ? "Admin" : "Branch Manager"}
             </div>
           </div>
         </header>
 
-        <main className="flex-1 px-6 pb-16 pt-5">{children}</main>
+        <main className="flex-1 bg-bg px-6 pb-16 pt-5">{children}</main>
       </div>
     </div>
   );

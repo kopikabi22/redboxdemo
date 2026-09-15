@@ -3,11 +3,11 @@ import type { ReactNode } from "react";
 type BadgeTone = "ok" | "warn" | "danger" | "gold" | "neutral";
 
 const toneClasses: Record<BadgeTone, string> = {
-  ok: "bg-ok/15 text-ok",
-  warn: "bg-warn/15 text-warn",
-  danger: "bg-danger/15 text-danger",
-  gold: "bg-gold-bright/20 text-gold-bright",
-  neutral: "bg-surface-2 text-text-muted",
+  ok: "bg-ok/10 text-ok border border-ok/25",
+  warn: "bg-warn/10 text-warn border border-warn/25",
+  danger: "bg-danger/10 text-danger border border-danger/25",
+  gold: "bg-gold-bright/15 text-gold-bright border border-gold-bright/30",
+  neutral: "bg-surface-2 text-text-muted border border-border",
 };
 
 export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; children: ReactNode }) {

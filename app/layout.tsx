@@ -31,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="id"
       className={`${bebasNeue.variable} ${playfairDisplay.variable} ${inter.variable} h-full`}
     >
-      <body className="min-h-full font-body antialiased">{children}</body>
+      <body className="min-h-full bg-bg text-text font-body antialiased">{children}</body>
     </html>
   );
 }

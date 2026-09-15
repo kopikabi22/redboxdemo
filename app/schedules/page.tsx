@@ -106,9 +106,9 @@ export default function EmployeeSchedulePage() {
   function getShiftBadgeClass(type: ShiftType) {
     switch (type) {
       case "pagi":
-        return "border-blue-500/30 bg-blue-500/15 text-blue-400";
+        return "border-blue-500/30 bg-blue-50 text-blue-700 font-semibold";
       case "siang":
-        return "border-amber-500/30 bg-amber-500/15 text-amber-400";
+        return "border-amber-500/30 bg-amber-50 text-amber-700 font-semibold";
       case "full":
         return "border-gold-bright/40 bg-gold-bright/15 text-gold-bright font-bold";
       case "off":
@@ -152,7 +152,7 @@ export default function EmployeeSchedulePage() {
     >
       <div className="space-y-4">
         {/* Today's Shift Card */}
-        <div className="rounded-lg border border-gold-bright/40 bg-surface p-4">
+        <div className="rounded-lg border border-gold-bright/40 bg-surface p-4 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
             <div>
               <div className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
@@ -166,7 +166,7 @@ export default function EmployeeSchedulePage() {
                   {getShiftLabel(todayMySchedule.shiftType)}
                 </span>
               ) : (
-                <span className="inline-block rounded-full border border-blue-500/30 bg-blue-500/15 px-3 py-1 text-xs font-bold text-blue-400">
+                <span className="inline-block rounded-full border border-blue-500/30 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
                   Pagi (09:00 - 15:00) · Default
                 </span>
               )}

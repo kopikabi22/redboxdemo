@@ -229,14 +229,14 @@ export default function ManajemenAssetsPage() {
                         <button
                           type="button"
                           onClick={() => setEditAsset(asset)}
-                          className="cursor-pointer rounded border border-border bg-surface-2 px-2.5 py-1 text-xs font-semibold text-gold-bright transition-colors hover:bg-surface hover:text-white"
+                          className="cursor-pointer rounded border border-border bg-surface-2 px-2.5 py-1 text-xs font-semibold text-gold-bright transition-colors hover:bg-surface hover:text-text"
                         >
                           Ubah
                         </button>
                         <button
                           type="button"
                           onClick={() => alert('Fitur Hapus dinonaktifkan pada mode UAT Demo untuk melindungi integritas data.')}
-                          className="cursor-pointer rounded border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/20"
+                          className="cursor-pointer rounded border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-500/20"
                         >
                           Hapus
                         </button>

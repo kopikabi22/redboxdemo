@@ -387,7 +387,7 @@ export default function RiwayatTransaksiPage() {
                   onClick={() => setSelectedPeriod(period)}
                   className={`rounded-md px-3 py-1 text-xs font-semibold transition-all ${
                     selectedPeriod === period
-                      ? "bg-gold-bright text-black font-bold shadow-sm"
+                      ? "bg-gold-bright text-white font-bold shadow-sm"
                       : "text-text-muted hover:text-text hover:bg-surface"
                   }`}
                 >
@@ -530,9 +530,9 @@ export default function RiwayatTransaksiPage() {
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="flex items-center justify-between rounded-lg border border-border bg-surface-2 p-3">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-surface-2 p-3 shadow-xs">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-green-950/60 text-base font-bold text-green-400">
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-green-100 text-base font-bold text-green-700">
                   💵
                 </span>
                 <div>
@@ -545,9 +545,9 @@ export default function RiwayatTransaksiPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-border bg-surface-2 p-3">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-surface-2 p-3 shadow-xs">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-950/60 text-base font-bold text-amber-400">
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-amber-100 text-base font-bold text-amber-700">
                   📱
                 </span>
                 <div>
@@ -560,9 +560,9 @@ export default function RiwayatTransaksiPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-border bg-surface-2 p-3">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-surface-2 p-3 shadow-xs">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-950/60 text-base font-bold text-blue-400">
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-100 text-base font-bold text-blue-700">
                   💳
                 </span>
                 <div>
@@ -570,7 +570,7 @@ export default function RiwayatTransaksiPage() {
                   <div className="text-[10px] text-text-muted">EDC Merchant Bank</div>
                 </div>
               </div>
-              <div className="font-mono text-sm font-bold text-blue-400">
+              <div className="font-mono text-sm font-bold text-blue-700">
                 {formatRupiah(debitTotal)}
               </div>
             </div>

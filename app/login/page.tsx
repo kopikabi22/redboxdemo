@@ -61,9 +61,9 @@ export default function LoginPage() {
               key={employee.id}
               type="button"
               onClick={() => openPinModal(employee)}
-              className="rounded-lg border border-border bg-surface p-4 text-left transition hover:-translate-y-0.5 hover:border-gold-bright"
+              className="rounded-lg border border-border bg-surface p-4 text-left shadow-xs transition hover:-translate-y-0.5 hover:border-gold-bright hover:shadow-md"
             >
-              <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-red text-sm font-extrabold">
+              <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-red text-sm font-extrabold text-white shadow-xs">
                 {employee.name.charAt(0)}
               </div>
               <div className="text-sm font-bold">{employee.name}</div>

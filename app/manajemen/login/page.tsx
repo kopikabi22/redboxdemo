@@ -83,7 +83,7 @@ export default function ManajemenLoginPage() {
         <Image src="/logo-redbox.png" alt="RedBox Logo" width={240} height={80} className="object-contain" priority />
       </div>
       {/* Dropdown Selector */}
-      <div className="mb-6 w-full max-w-md rounded-xl border border-border/70 bg-surface/60 p-4 shadow-lg backdrop-blur-sm">
+      <div className="mb-6 w-full max-w-md rounded-xl border border-border bg-surface p-4 shadow-md">
         <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-text-muted">
           Pilih Akun Manajemen
         </label>
